@@ -1,0 +1,943 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>CRYOTRAC</title>
+<link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bright: #39FF14;
+    --mid:    #20C020;
+    --dim:    #0A4A0A;
+    --bg:     #020802;
+    --glow:   0 0 6px #39FF14, 0 0 12px #39FF14;
+    --glow-sm:0 0 3px #39FF14, 0 0 7px #39FF14;
+  }
+
+  html, body {
+    height: 100%;
+    background: var(--bg);
+    color: var(--bright);
+    font-family: 'VT323', monospace;
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* Scanlines */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(
+      to bottom,
+      transparent 0px,
+      transparent 2px,
+      rgba(0,255,0,0.13) 2px,
+      rgba(0,255,0,0.13) 3px
+    );
+    pointer-events: none;
+    z-index: 9999;
+  }
+
+  #app {
+    display: flex;
+    flex-direction: column;
+    height: 100dvh;
+    padding: 4px 10px;
+    gap: 0;
+    overflow: hidden;
+  }
+
+  .divider {
+    height: 1px;
+    background: var(--dim);
+    margin: 3px 0;
+    flex-shrink: 0;
+  }
+
+  /* ─── HEADER ─── */
+  #header {
+    display: flex;
+    flex-direction: column;
+    padding: 2px 0 1px;
+    flex-shrink: 0;
+  }
+  #header .appname {
+    font-size: 30px;
+    letter-spacing: 7px;
+    text-shadow: var(--glow);
+    white-space: nowrap;
+    line-height: 1;
+  }
+  #header .subtitle {
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--mid);
+    white-space: nowrap;
+    text-align: right;
+    line-height: 1.1;
+  }
+  #header .subtitle::after {
+    content: '█';
+    animation: blink 1s step-end infinite;
+  }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+  /* ─── PANELS ─── */
+  .panel {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    padding: 2px 0;
+  }
+  .panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12px;
+    letter-spacing: 3px;
+    color: var(--mid);
+    margin-bottom: 2px;
+    flex-shrink: 0;
+  }
+  .panel-header .ch-label { color: var(--bright); text-shadow: var(--glow-sm); }
+
+  /* ─── CH-01 ─── */
+  #ch01-body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 1;
+    min-height: 0;
+    gap: 2px;
+  }
+  #ch01-top {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    justify-content: center;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+  }
+  #meter-svg {
+    flex-shrink: 0;
+    height: 100%;
+    max-height: 150px;
+    width: auto;
+    filter: drop-shadow(0 0 4px #39FF14);
+  }
+  #ch01-right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    flex-shrink: 0;
+  }
+  .numeric-readout {
+    font-size: 28px;
+    letter-spacing: 2px;
+    text-shadow: var(--glow);
+    min-width: 60px;
+    text-align: center;
+  }
+  #ch01-status {
+    font-size: 13px;
+    letter-spacing: 3px;
+  }
+  .status-clear    { color: var(--mid); }
+  .status-trace    { color: var(--bright); text-shadow: var(--glow-sm); }
+  .status-active   { color: var(--bright); text-shadow: var(--glow); }
+  .status-anomaly  { color: var(--bright); text-shadow: var(--glow); animation: flicker 0.15s step-end infinite; }
+  .status-offline  { color: var(--dim); }
+  @keyframes flicker { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+  #power-btn {
+    width: 32px; height: 32px;
+    background: transparent;
+    border: 1px solid var(--dim);
+    color: var(--dim);
+    font-family: 'VT323', monospace;
+    font-size: 18px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.1s;
+    flex-shrink: 0;
+  }
+  #power-btn.on {
+    border-color: var(--bright);
+    color: var(--bright);
+    box-shadow: var(--glow-sm);
+  }
+
+  #readout-strip {
+    display: flex;
+    gap: 14px;
+    font-size: 13px;
+    letter-spacing: 2px;
+    flex-shrink: 0;
+    padding-bottom: 2px;
+  }
+  .readout-field { display: flex; flex-direction: column; align-items: center; }
+  .readout-label { font-size: 10px; color: var(--mid); letter-spacing: 2px; }
+  .readout-val   { color: var(--bright); }
+  #zone-val {
+    display: inline-block;
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: var(--dim);
+    margin-top: 3px;
+    transition: background 0.1s, box-shadow 0.1s;
+  }
+  #zone-val.active {
+    background: var(--bright);
+    box-shadow: var(--glow);
+    animation: pulse 0.5s ease-in-out infinite alternate;
+  }
+  @keyframes pulse { from{box-shadow:var(--glow-sm)} to{box-shadow:var(--glow)} }
+
+  /* Panel anomaly flash */
+  @keyframes panel-flash {
+    0%,100%{box-shadow:none}
+    50%{box-shadow:0 0 20px var(--bright)}
+  }
+  .panel-flash { animation: panel-flash 0.3s ease-out 3; }
+
+  /* ─── GHOSTEC ─── */
+  #ghostec-panel {
+    flex: 1;
+  }
+  #ghostec-body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 1;
+    min-height: 0;
+    gap: 4px;
+  }
+  #ghostec-word {
+    font-size: 42px;
+    letter-spacing: 4px;
+    text-shadow: var(--glow);
+    text-align: center;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 0;
+    width: 100%;
+  }
+  #ghostec-progress-wrap {
+    width: 100%;
+    height: 3px;
+    background: var(--dim);
+    flex-shrink: 0;
+  }
+  #ghostec-progress-bar {
+    height: 3px;
+    background: var(--bright);
+    box-shadow: var(--glow-sm);
+    width: 0%;
+    transition: width 0.1s linear;
+  }
+  #ghostec-play-btn {
+    width: 100%;
+    height: 28px;
+    background: transparent;
+    border: 1px solid var(--dim);
+    color: var(--dim);
+    font-family: 'VT323', monospace;
+    font-size: 16px;
+    letter-spacing: 4px;
+    cursor: pointer;
+    transition: all 0.1s;
+    flex-shrink: 0;
+  }
+  #ghostec-play-btn.running {
+    border-color: var(--bright);
+    color: var(--bright);
+    box-shadow: var(--glow-sm);
+  }
+
+  /* ─── CH-03 THERMAL ─── */
+  #ch03-panel {
+    flex: 0.7;
+  }
+  #ch03-body {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    gap: 4px;
+  }
+  #thermal-bar-wrap {
+    display: flex;
+    gap: 2px;
+    flex: 1;
+    align-items: center;
+    min-height: 0;
+  }
+  .thermal-seg {
+    flex: 1;
+    height: 100%;
+    max-height: 40px;
+    background: #020f02;
+    border: 1px solid #0A2A0A;
+    transition: background 0.3s, box-shadow 0.3s;
+  }
+  .thermal-seg.lit-low  { background: #0A4A0A; }
+  .thermal-seg.lit-trail{ background: #20C020; }
+  .thermal-seg.lit-peak { background: var(--bright); box-shadow: var(--glow-sm); }
+
+  #thermal-bottom {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-shrink: 0;
+  }
+  #thermal-status { font-size: 14px; letter-spacing: 3px; }
+  #thermal-readout {
+    font-size: 26px;
+    letter-spacing: 2px;
+    text-shadow: var(--glow);
+  }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- HEADER -->
+  <div id="header">
+    <div class="appname">CRYOTRAC</div>
+    <div class="subtitle">PARANORMAL SIG-METER&nbsp;</div>
+  </div>
+  <div class="divider"></div>
+
+  <!-- CH-01 -->
+  <div class="panel" id="ch01-panel">
+    <div class="panel-header">
+      <span><span class="ch-label">CH-01</span> &nbsp;SCREEN TOUCH SENSOR</span>
+      <button id="power-btn" title="Power">⏻</button>
+    </div>
+    <div id="ch01-body">
+      <div id="ch01-top">
+        <svg id="meter-svg" viewBox="0 0 220 120" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <filter id="glow">
+              <feGaussianBlur stdDeviation="2.5" result="blur"/>
+              <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+          </defs>
+          <!-- Tick arcs & labels rendered by JS -->
+          <g id="meter-ticks"></g>
+          <g id="meter-arc-bg"></g>
+          <g id="meter-arc-fg" filter="url(#glow)"></g>
+          <line id="needle" x1="110" y1="110" x2="110" y2="30"
+            stroke="#39FF14" stroke-width="2" stroke-linecap="round"
+            style="transform-origin:110px 110px;transform:rotate(0deg)"
+            filter="url(#glow)"/>
+          <!-- Pivot -->
+          <circle cx="110" cy="110" r="4" fill="#39FF14" filter="url(#glow)"/>
+        </svg>
+        <div id="ch01-right">
+          <div class="numeric-readout" id="ch01-num">000</div>
+          <div id="ch01-status" class="status-offline">OFFLINE</div>
+        </div>
+      </div>
+      <div id="readout-strip">
+        <div class="readout-field"><div class="readout-label">CNT</div><div class="readout-val" id="rs-cnt">0</div></div>
+        <div class="readout-field"><div class="readout-label">FRC</div><div class="readout-val" id="rs-frc">0.00</div></div>
+        <div class="readout-field"><div class="readout-label">AREA</div><div class="readout-val" id="rs-area">0.00</div></div>
+        <div class="readout-field"><div class="readout-label">ZONE</div><div id="zone-val"></div></div>
+      </div>
+    </div>
+  </div>
+  <div class="divider"></div>
+
+  <!-- GHOSTEC -->
+  <div class="panel" id="ghostec-panel">
+    <div class="panel-header">
+      <span><span class="ch-label">GHOSTEC</span> &nbsp;WORD ENGINE</span>
+      <span id="ghostec-counter">0000/5000</span>
+    </div>
+    <div id="ghostec-body">
+      <div id="ghostec-word">-- READY --</div>
+      <div id="ghostec-progress-wrap"><div id="ghostec-progress-bar"></div></div>
+      <button id="ghostec-play-btn">▶ &nbsp;INITIATE SEQUENCE</button>
+    </div>
+  </div>
+  <div class="divider"></div>
+
+  <!-- CH-03 THERMAL -->
+  <div class="panel" id="ch03-panel">
+    <div class="panel-header">
+      <span><span class="ch-label">CH-03</span> &nbsp;THERMAL SENSOR</span>
+    </div>
+    <div id="ch03-body">
+      <div id="thermal-bar-wrap"></div>
+      <div id="thermal-bottom">
+        <div id="thermal-status" class="status-clear">AMBIENT</div>
+        <div id="thermal-readout">--.-°F</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ═══════════════════════════════════════════════
+//  METER SVG SETUP
+// ═══════════════════════════════════════════════
+(function buildMeter() {
+  const cx = 110, cy = 110, r = 80;
+  const ticks = [{deg:270,label:'0'},{deg:315,label:'25'},{deg:0,label:'50'},{deg:45,label:'75'},{deg:90,label:'100'}];
+  const ticksG  = document.getElementById('meter-ticks');
+  const arcBgG  = document.getElementById('meter-arc-bg');
+
+  function polar(deg, radius) {
+    const rad = (deg - 90) * Math.PI / 180;
+    return [cx + radius * Math.cos(rad), cy + radius * Math.sin(rad)];
+  }
+
+  // Draw major ticks + labels
+  ticks.forEach(({deg, label}) => {
+    const [x1,y1] = polar(deg, r - 6);
+    const [x2,y2] = polar(deg, r + 6);
+    const line = document.createElementNS('http://www.w3.org/2000/svg','line');
+    line.setAttribute('x1',x1); line.setAttribute('y1',y1);
+    line.setAttribute('x2',x2); line.setAttribute('y2',y2);
+    line.setAttribute('stroke','#0A4A0A'); line.setAttribute('stroke-width','1.5');
+    ticksG.appendChild(line);
+
+    const [lx,ly] = polar(deg, r + 16);
+    const text = document.createElementNS('http://www.w3.org/2000/svg','text');
+    text.setAttribute('x',lx); text.setAttribute('y',ly+4);
+    text.setAttribute('fill','#20C020'); text.setAttribute('font-size','10');
+    text.setAttribute('font-family','VT323,monospace');
+    text.setAttribute('text-anchor','middle');
+    text.textContent = label;
+    ticksG.appendChild(text);
+  });
+
+  // Minor ticks between major positions (10 per gap)
+  const degPositions = [270,315,360,45,90];
+  for (let i = 0; i < degPositions.length - 1; i++) {
+    let start = degPositions[i], end = degPositions[i+1];
+    if (end < start) end += 360;
+    for (let j = 1; j < 10; j++) {
+      const d = ((start + (end - start) * j / 10) % 360);
+      const [x1,y1] = polar(d, r - 3);
+      const [x2,y2] = polar(d, r + 3);
+      const line = document.createElementNS('http://www.w3.org/2000/svg','line');
+      line.setAttribute('x1',x1); line.setAttribute('y1',y1);
+      line.setAttribute('x2',x2); line.setAttribute('y2',y2);
+      line.setAttribute('stroke','#0A4A0A'); line.setAttribute('stroke-width','1');
+      ticksG.appendChild(line);
+    }
+  }
+
+  // Arc background (full 180°)
+  function arcPath(startDeg, endDeg, radius) {
+    let s = startDeg, e = endDeg;
+    if (e <= s) e += 360;
+    const large = (e - s) > 180 ? 1 : 0;
+    const [sx,sy] = polar(s, radius);
+    const [ex,ey] = polar(e % 360, radius);
+    return `M ${sx} ${sy} A ${radius} ${radius} 0 ${large} 1 ${ex} ${ey}`;
+  }
+  const arcBg = document.createElementNS('http://www.w3.org/2000/svg','path');
+  arcBg.setAttribute('d', arcPath(270, 90, r));
+  arcBg.setAttribute('stroke','#0A4A0A'); arcBg.setAttribute('stroke-width','3');
+  arcBg.setAttribute('fill','none');
+  arcBgG.appendChild(arcBg);
+})();
+
+// ═══════════════════════════════════════════════
+//  THERMAL BAR SETUP (20 segments)
+// ═══════════════════════════════════════════════
+const thermalWrap = document.getElementById('thermal-bar-wrap');
+const SEGMENTS = 20;
+const thermalSegs = [];
+for (let i = 0; i < SEGMENTS; i++) {
+  const d = document.createElement('div');
+  d.className = 'thermal-seg';
+  thermalWrap.appendChild(d);
+  thermalSegs.push(d);
+}
+
+// ═══════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════
+let ch01On    = false;
+let ch01Signal = 0;
+let ch01Decay  = null;
+
+// ═══════════════════════════════════════════════
+//  AUDIO
+// ═══════════════════════════════════════════════
+let audioCtx  = null;
+// CH-01
+let osc01, gain01, filter01;
+// Ghostec
+let oscGh, gainGh, filterGh;
+let ghostecAudioOn = false;
+
+function ensureAudio() {
+  if (audioCtx) return;
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+  // CH-01 oscillator
+  osc01   = audioCtx.createOscillator();
+  gain01  = audioCtx.createGain();
+  filter01= audioCtx.createBiquadFilter();
+  osc01.type = 'sine';
+  filter01.type = 'lowpass';
+  filter01.frequency.value = 800;
+  filter01.Q.value = 1.2;
+  gain01.gain.value = 0;
+  osc01.connect(filter01);
+  filter01.connect(gain01);
+  gain01.connect(audioCtx.destination);
+  osc01.start();
+
+  // Ghostec oscillator (fifth above)
+  oscGh   = audioCtx.createOscillator();
+  gainGh  = audioCtx.createGain();
+  filterGh= audioCtx.createBiquadFilter();
+  oscGh.type = 'sine';
+  filterGh.type = 'lowpass';
+  filterGh.frequency.value = 800;
+  filterGh.Q.value = 1.2;
+  gainGh.gain.value = 0;
+  oscGh.connect(filterGh);
+  filterGh.connect(gainGh);
+  gainGh.connect(audioCtx.destination);
+  oscGh.start();
+}
+
+function setAudio01(signal) {
+  if (!audioCtx || !ch01On) return;
+  const t = audioCtx.currentTime;
+  const freq = 60 + (signal / 100) * 360;
+  const g    = (signal / 100) * 0.18;
+  osc01.frequency.setTargetAtTime(freq, t, 0.08);
+  gain01.gain.setTargetAtTime(g, t, 0.08);
+}
+
+function setAudioGhostec(on) {
+  if (!audioCtx) return;
+  ghostecAudioOn = on;
+  const t = audioCtx.currentTime;
+  if (on) {
+    const freq = 90 + (ch01Signal / 100) * 540;
+    oscGh.frequency.setTargetAtTime(freq, t, 0.08);
+    gainGh.gain.setTargetAtTime(0.13, t, 0.08);
+  } else {
+    gainGh.gain.setTargetAtTime(0, t, 0.08);
+  }
+}
+
+function updateGhostecAudioFreq() {
+  if (!audioCtx || !ghostecAudioOn) return;
+  const t = audioCtx.currentTime;
+  const freq = 90 + (ch01Signal / 100) * 540;
+  oscGh.frequency.setTargetAtTime(freq, t, 0.08);
+}
+
+// ═══════════════════════════════════════════════
+//  CH-01 — NEEDLE RENDERING
+// ═══════════════════════════════════════════════
+function signalToDeg(s) {
+  // 0→-90°(left), 100→90°(right) relative to top
+  return -90 + s * 1.8;
+}
+
+const needleEl   = document.getElementById('needle');
+const arcFgG     = document.getElementById('meter-arc-fg');
+let   arcFgPath  = null;
+
+function renderNeedle(signal) {
+  // Needle rotation
+  const deg = signalToDeg(signal);
+  needleEl.style.transform = `rotate(${deg}deg)`;
+
+  // Foreground arc from 270° to current position
+  if (!arcFgPath) {
+    arcFgPath = document.createElementNS('http://www.w3.org/2000/svg','path');
+    arcFgPath.setAttribute('stroke','#39FF14');
+    arcFgPath.setAttribute('stroke-width','3');
+    arcFgPath.setAttribute('fill','none');
+    arcFgG.appendChild(arcFgPath);
+  }
+
+  if (signal < 1) {
+    arcFgPath.setAttribute('d','');
+    return;
+  }
+
+  // Map signal 0-100 to arc 270°→90° (going clockwise through 0°)
+  const arcEnd = 270 + signal * 1.8; // degrees clockwise from top-referenced
+  // Convert to our polar function degrees (0=top, clockwise positive)
+  const startD = 270; // 9 o'clock in standard circle = 270° standard
+  // Our polar uses (deg-90)*pi/180: deg=270 → standard 180° = 9 o'clock ✓
+  // Arc: 270 to 270+signal*1.8, capped at 360+90=450 but we mod
+  const endD = (270 + signal * 1.8) % 360;
+
+  const cx=110,cy=110,r=80;
+  function polar(deg,radius){
+    const rad=(deg-90)*Math.PI/180;
+    return[cx+radius*Math.cos(rad),cy+radius*Math.sin(rad)];
+  }
+  function arcP(s,e,radius){
+    let start=s,end=e;
+    // always go clockwise; if end<=start wrap
+    const sweep = signal*1.8;
+    const large = sweep>180?1:0;
+    const [sx,sy]=polar(start,radius);
+    const [ex,ey]=polar(end,radius);
+    if(sweep<0.5) return '';
+    return `M ${sx} ${sy} A ${radius} ${radius} 0 ${large} 1 ${ex} ${ey}`;
+  }
+  arcFgPath.setAttribute('d', arcP(270, endD, r));
+}
+
+// ═══════════════════════════════════════════════
+//  CH-01 — TOUCH HANDLING
+// ═══════════════════════════════════════════════
+const ch01Panel = document.getElementById('ch01-panel');
+const ch01Num   = document.getElementById('ch01-num');
+const ch01Stat  = document.getElementById('ch01-status');
+const rsCnt     = document.getElementById('rs-cnt');
+const rsFrc     = document.getElementById('rs-frc');
+const rsArea    = document.getElementById('rs-area');
+const zoneVal   = document.getElementById('zone-val');
+
+let activePointers = {};
+let jitterTimeout  = null;
+
+function computeSignal() {
+  const ptrs = Object.values(activePointers);
+  const count = ptrs.length;
+  const force = ptrs.reduce((s,p)=>s+(p.force||0),0);
+  const area  = ptrs.reduce((s,p)=>s+(p.area||0),0);
+  return Math.min(count*22 + force*30 + Math.min(area/10,15), 100);
+}
+
+function updateCh01Display(signal, ptrs) {
+  if (!ch01On) return;
+  ch01Signal = signal;
+  renderNeedle(signal);
+  ch01Num.textContent = String(Math.round(signal)).padStart(3,'0');
+
+  let statusClass='status-clear', statusText='CLEAR';
+  if (signal >= 85)      { statusClass='status-anomaly'; statusText='ANOMALY'; }
+  else if (signal >= 60) { statusClass='status-active';  statusText='ACTIVE';  }
+  else if (signal >= 30) { statusClass='status-trace';   statusText='TRACE';   }
+  ch01Stat.className = statusClass;
+  ch01Stat.textContent = statusText;
+
+  if (signal >= 85 && !ch01Panel.classList.contains('panel-flash')) {
+    ch01Panel.classList.add('panel-flash');
+    setTimeout(()=>ch01Panel.classList.remove('panel-flash'),900);
+  }
+
+  const pArr = Object.values(ptrs);
+  rsCnt.textContent  = pArr.length;
+  rsFrc.textContent  = pArr.reduce((s,p)=>s+(p.force||0),0).toFixed(2);
+  rsArea.textContent = pArr.reduce((s,p)=>s+(p.area||0),0).toFixed(2);
+  if (pArr.length > 0) { zoneVal.classList.add('active'); }
+  else                 { zoneVal.classList.remove('active'); }
+
+  setAudio01(signal);
+  updateGhostecAudioFreq();
+}
+
+function startDecay() {
+  if (ch01Decay) return;
+  ch01Decay = setInterval(()=>{
+    if (Object.keys(activePointers).length > 0) return;
+    ch01Signal = Math.max(0, ch01Signal - 2.5);
+    renderNeedle(ch01Signal);
+    ch01Num.textContent = String(Math.round(ch01Signal)).padStart(3,'0');
+    let sc='status-clear',st='CLEAR';
+    if(ch01Signal>=85){sc='status-anomaly';st='ANOMALY';}
+    else if(ch01Signal>=60){sc='status-active';st='ACTIVE';}
+    else if(ch01Signal>=30){sc='status-trace';st='TRACE';}
+    ch01Stat.className=sc; ch01Stat.textContent=st;
+    setAudio01(ch01Signal);
+    if (ch01Signal <= 0) {
+      clearInterval(ch01Decay); ch01Decay=null;
+      ch01Stat.className='status-clear'; ch01Stat.textContent='CLEAR';
+      zoneVal.classList.remove('active');
+    }
+  }, 80);
+}
+
+ch01Panel.addEventListener('pointerdown', e=>{
+  if (!ch01On) return;
+  ensureAudio();
+  e.preventDefault();
+  activePointers[e.pointerId] = {
+    force: e.pressure||0,
+    area:  (e.width||0)*(e.height||0)
+  };
+  updateCh01Display(computeSignal(), activePointers);
+}, {passive:false});
+
+ch01Panel.addEventListener('pointermove', e=>{
+  if (!ch01On || !activePointers[e.pointerId]) return;
+  activePointers[e.pointerId] = {
+    force: e.pressure||0,
+    area:  (e.width||0)*(e.height||0)
+  };
+  const jitter = (Math.random()-0.5)*10;
+  const sig = Math.max(0, Math.min(100, computeSignal()+jitter));
+  updateCh01Display(sig, activePointers);
+}, {passive:true});
+
+['pointerup','pointercancel'].forEach(ev=>{
+  ch01Panel.addEventListener(ev, e=>{
+    delete activePointers[e.pointerId];
+    if (Object.keys(activePointers).length === 0) startDecay();
+    else updateCh01Display(computeSignal(), activePointers);
+  });
+});
+
+// ═══════════════════════════════════════════════
+//  POWER BUTTON
+// ═══════════════════════════════════════════════
+const powerBtn = document.getElementById('power-btn');
+powerBtn.addEventListener('click', ()=>{
+  ensureAudio();
+  if (!ch01On) {
+    ch01On = true;
+    powerBtn.classList.add('on');
+    ch01Stat.className='status-clear'; ch01Stat.textContent='CLEAR';
+  } else {
+    ch01On = false;
+    powerBtn.classList.remove('on');
+    activePointers={};
+    ch01Signal=0;
+    clearInterval(ch01Decay); ch01Decay=null;
+    renderNeedle(0);
+    ch01Num.textContent='000';
+    ch01Stat.className='status-offline'; ch01Stat.textContent='OFFLINE';
+    rsCnt.textContent='0'; rsFrc.textContent='0.00'; rsArea.textContent='0.00';
+    zoneVal.classList.remove('active');
+    setAudio01(0);
+  }
+});
+
+// ═══════════════════════════════════════════════
+//  GHOSTEC — WORD BANK
+// ═══════════════════════════════════════════════
+const SEEDS = [
+  'shadow','void','haunt','tomb','whisper','echo','cold','spirit','vessel',
+  'presence','wander','drift','hollow','mist','veil','mourn','linger','beyond',
+  'threshold','passage','remnant','memory','trace','light','dark','signal',
+  'frequency','static','pulse','flicker','resonance','channel','contact',
+  'energy','force','matter','wave','field','zone','origin','center','edge',
+  'convergence','manifest','reveal','conceal','hidden','open','close','pass',
+  'follow','watch','hear','feel','sense','know','see','touch','speak','answer',
+  'question','seek','find','lost','found','here','there','near','far','within',
+  'without','above','below','between','before','after','now','then','always',
+  'never','sometimes','once','again','still','silent','loud','quiet','warm',
+  'cold','alive','gone','remain','return','leave','stay','come','go',
+  // names
+  'James','Mary','Robert','Patricia','John','Jennifer','Michael','Linda',
+  'William','Barbara','David','Elizabeth','Richard','Susan','Joseph','Jessica',
+  'Thomas','Sarah','Charles','Karen','Emma','Oliver','Sophia','Liam','Noah',
+  'Ava','Isabella','Lucas','Mia','Mason','Charlotte','Ethan','Amelia',
+  // emotions
+  'fear','love','grief','anger','joy','sorrow','longing','peace','dread',
+  'hope','despair','wonder','regret','guilt','pride','shame','trust',
+  // environment
+  'forest','river','mountain','ocean','sky','earth','fire','wind','rain',
+  'storm','fog','dust','ash','snow','ice','heat','stone','wood','metal','glass',
+  'door','window','wall','floor','ceiling','room','hall','stair','bridge',
+  'road','path','gate','lock','key','mirror','clock','candle','lamp','photo',
+  // verbs
+  'breathe','move','stand','fall','rise','push','pull','turn','open','close',
+  'wait','listen','remember','forget','release','hold','carry','drop','throw',
+  'catch','run','stop','begin','end','change','remain','appear','vanish'
+];
+
+function buildWordBank() {
+  const bank = [];
+  while (bank.length < 5000) {
+    const shuffled = [...SEEDS].sort(()=>Math.random()-0.5);
+    bank.push(...shuffled);
+  }
+  return bank.slice(0, 5000);
+}
+
+let wordBank = [];
+let wordIndex = 0;
+let ghostecRunning = false;
+let ghostecTimer   = null;
+
+// TTS voices
+let maleVoices   = [];
+let femaleVoices = [];
+const FEMALE_NAMES = ['samantha','zira','karen','victoria','moira','tessa','fiona','allison','ava','kate','vicki','nora','amelie','alice','zosia','helena','neel'];
+const MALE_NAMES   = ['daniel','david','alex','thomas','oliver','george','lee','rishi','diego','jorge','luca','paul','arthur'];
+
+function classifyVoices() {
+  const all = speechSynthesis.getVoices().filter(v=>v.lang.startsWith('en'));
+  maleVoices=[]; femaleVoices=[];
+  all.forEach((v,i)=>{
+    const n = v.name.toLowerCase();
+    const isFemale = FEMALE_NAMES.some(f=>n.includes(f));
+    const isMale   = MALE_NAMES.some(m=>n.includes(m));
+    if (isFemale)      femaleVoices.push(v);
+    else if (isMale)   maleVoices.push(v);
+    else if (i%2===0)  maleVoices.push(v);
+    else               femaleVoices.push(v);
+  });
+  if (!maleVoices.length && all.length) maleVoices = all;
+  if (!femaleVoices.length && all.length) femaleVoices = all;
+}
+speechSynthesis.onvoiceschanged = classifyVoices;
+classifyVoices();
+
+function pickVoice(idx) {
+  const pos = idx % 3;
+  if (pos === 2) return femaleVoices[Math.floor(Math.random()*femaleVoices.length)];
+  return maleVoices[Math.floor(Math.random()*maleVoices.length)];
+}
+
+function speakWord(word, idx) {
+  speechSynthesis.cancel();
+  const utt = new SpeechSynthesisUtterance(word);
+  utt.rate   = 1.1;
+  utt.pitch  = 1.0;
+  utt.volume = 1.0;
+  const v = pickVoice(idx);
+  if (v) utt.voice = v;
+  speechSynthesis.speak(utt);
+}
+
+const ghostecWordEl    = document.getElementById('ghostec-word');
+const ghostecProgressBar = document.getElementById('ghostec-progress-bar');
+const ghostecCounter   = document.getElementById('ghostec-counter');
+const ghostecPlayBtn   = document.getElementById('ghostec-play-btn');
+
+function ghostecTick() {
+  if (wordIndex >= 5000) {
+    ghostecStop(true);
+    return;
+  }
+  const word = wordBank[wordIndex];
+  ghostecWordEl.textContent = word.toUpperCase();
+  ghostecCounter.textContent = String(wordIndex+1).padStart(4,'0') + '/5000';
+  ghostecProgressBar.style.width = ((wordIndex+1)/5000*100).toFixed(2)+'%';
+  speakWord(word, wordIndex);
+  wordIndex++;
+  ghostecTimer = setTimeout(ghostecTick, 150);
+}
+
+function ghostecStart() {
+  ensureAudio();
+  wordBank   = buildWordBank();
+  wordIndex  = 0;
+  ghostecRunning = true;
+  ghostecPlayBtn.classList.add('running');
+  ghostecPlayBtn.textContent = '■  STOP SEQUENCE';
+  setAudioGhostec(true);
+  ghostecTick();
+}
+
+function ghostecStop(complete) {
+  clearTimeout(ghostecTimer);
+  ghostecRunning = false;
+  speechSynthesis.cancel();
+  ghostecPlayBtn.classList.remove('running');
+  if (complete) {
+    ghostecWordEl.textContent = '-- SEQUENCE COMPLETE --';
+    ghostecPlayBtn.textContent = '▶  INITIATE SEQUENCE';
+    ghostecProgressBar.style.width = '100%';
+    ghostecCounter.textContent = '5000/5000';
+  } else {
+    ghostecPlayBtn.textContent = '▶  INITIATE SEQUENCE';
+  }
+  setAudioGhostec(false);
+}
+
+ghostecPlayBtn.addEventListener('click', ()=>{
+  if (ghostecRunning) ghostecStop(false);
+  else ghostecStart();
+});
+
+// ═══════════════════════════════════════════════
+//  CH-03 THERMAL
+// ═══════════════════════════════════════════════
+const thermalReadout = document.getElementById('thermal-readout');
+const thermalStatus  = document.getElementById('thermal-status');
+let thermalTemp = 70; // default baseline °F
+let thermalBaseline = 70;
+
+function updateThermalDisplay(tempF) {
+  thermalReadout.textContent = tempF.toFixed(1) + '°F';
+  // Status
+  let st='AMBIENT', sc='status-clear';
+  if      (tempF < 65)  { st='COLD';    sc='status-offline'; }
+  else if (tempF < 80)  { st='AMBIENT'; sc='status-clear';   }
+  else if (tempF < 95)  { st='WARM';    sc='status-trace';   }
+  else                  { st='HOT';     sc='status-active';  }
+  thermalStatus.className = sc; thermalStatus.textContent = st;
+
+  // Bar: 50°F=0segs, 120°F=20segs
+  const pct  = Math.max(0, Math.min(1, (tempF - 50) / 70));
+  const lit  = Math.round(pct * SEGMENTS);
+  thermalSegs.forEach((seg, i) => {
+    seg.className = 'thermal-seg';
+    if      (i === lit - 1) seg.classList.add('lit-peak');
+    else if (i === lit - 2 || i === lit - 3) seg.classList.add('lit-trail');
+    else if (i < lit)       seg.classList.add('lit-low');
+  });
+}
+
+// Try AmbientTemperatureSensor
+let sensorActive = false;
+if ('AmbientLightSensor' in window || 'AmbientTemperatureSensor' in window) {
+  try {
+    const sensor = new AmbientTemperatureSensor({ frequency: 1 });
+    sensor.addEventListener('reading', () => {
+      // reading in °C → convert to °F
+      thermalTemp = sensor.temperature * 9/5 + 32;
+      thermalBaseline = thermalTemp;
+      updateThermalDisplay(thermalTemp);
+      sensorActive = true;
+    });
+    sensor.start();
+  } catch(e) { /* not available */ }
+}
+
+// BatteryManager baseline
+if (!sensorActive && 'getBattery' in navigator) {
+  navigator.getBattery().then(bat => {
+    thermalBaseline = bat.charging ? 82 : 72;
+    thermalTemp = thermalBaseline;
+  }).catch(()=>{});
+}
+
+// Simulated drift — always running as fallback
+setInterval(() => {
+  if (sensorActive) return;
+  const drift = (Math.random() - 0.5) * 0.8;
+  const pull  = (thermalBaseline - thermalTemp) * 0.05;
+  thermalTemp = Math.max(50, Math.min(120, thermalTemp + drift + pull));
+  updateThermalDisplay(thermalTemp);
+}, 1000);
+
+// Init display immediately
+updateThermalDisplay(thermalTemp);
+renderNeedle(0);
+</script>
+</body>
+</html>
