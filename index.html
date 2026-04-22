@@ -62,9 +62,14 @@
   #header {
     display: flex;
     flex-direction: column;
-    align-items: center;
+    align-items: stretch;
     padding: 2px 0 1px;
     flex-shrink: 0;
+  }
+  #header-row1 {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
   }
   #header .appname {
     font-size: 30px;
@@ -72,7 +77,39 @@
     text-shadow: var(--glow);
     white-space: nowrap;
     line-height: 1;
-    text-align: center;
+  }
+  #header-right {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  #session-timer {
+    font-size: 18px;
+    letter-spacing: 2px;
+    color: var(--mid);
+    white-space: nowrap;
+    font-family: 'VT323', monospace;
+  }
+  #restart-btn {
+    background: transparent;
+    border: 1px solid var(--dim);
+    color: var(--dim);
+    font-family: 'VT323', monospace;
+    font-size: 18px;
+    width: 26px;
+    height: 22px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+    line-height: 1;
+    padding: 0;
+  }
+  #restart-btn:hover, #restart-btn:active {
+    border-color: var(--bright);
+    color: var(--bright);
+    box-shadow: var(--glow-sm);
   }
   #header .subtitle {
     font-size: 14px;
@@ -448,7 +485,13 @@
 
   <!-- HEADER -->
   <div id="header">
-    <div class="appname">CRYOTRAC</div>
+    <div id="header-row1">
+      <div class="appname">CRYOTRAC</div>
+      <div id="header-right">
+        <div id="session-timer">00:00</div>
+        <button id="restart-btn">↺</button>
+      </div>
+    </div>
     <div class="subtitle">PARANORMAL INVESTIGATION TOOL&nbsp;</div>
   </div>
   <div class="divider"></div>
@@ -472,12 +515,14 @@
           <g id="meter-ticks"></g>
           <g id="meter-arc-bg"></g>
           <g id="meter-arc-fg" filter="url(#glow)"></g>
-          <line id="needle" x1="110" y1="110" x2="110" y2="30"
-            stroke="#39FF14" stroke-width="2" stroke-linecap="round"
+          <!-- Needle: wide base tapering to sharp tip -->
+          <polygon id="needle" points="110,28 106,112 114,112"
+            fill="#39FF14"
             style="transform-origin:110px 110px;transform:rotate(0deg)"
             filter="url(#glow)"/>
           <!-- Pivot -->
-          <circle cx="110" cy="110" r="4" fill="#39FF14" filter="url(#glow)"/>
+          <circle cx="110" cy="110" r="5" fill="#39FF14" filter="url(#glow)"/>
+          <circle cx="110" cy="110" r="2" fill="#020802"/>
         </svg>
         <div id="ch01-right">
           <div class="numeric-readout" id="ch01-num">000</div>
@@ -560,37 +605,41 @@
 
   // Draw major ticks + labels
   ticks.forEach(({deg, label}) => {
-    const [x1,y1] = polar(deg, r - 6);
-    const [x2,y2] = polar(deg, r + 6);
+    const [x1,y1] = polar(deg, r - 8);
+    const [x2,y2] = polar(deg, r + 8);
     const line = document.createElementNS('http://www.w3.org/2000/svg','line');
     line.setAttribute('x1',x1); line.setAttribute('y1',y1);
     line.setAttribute('x2',x2); line.setAttribute('y2',y2);
-    line.setAttribute('stroke','#0A4A0A'); line.setAttribute('stroke-width','1.5');
+    line.setAttribute('stroke','#20C020'); line.setAttribute('stroke-width','2');
     ticksG.appendChild(line);
 
-    const [lx,ly] = polar(deg, r + 16);
+    const [lx,ly] = polar(deg, r + 18);
     const text = document.createElementNS('http://www.w3.org/2000/svg','text');
     text.setAttribute('x',lx); text.setAttribute('y',ly+4);
-    text.setAttribute('fill','#20C020'); text.setAttribute('font-size','10');
+    text.setAttribute('fill','#39FF14'); text.setAttribute('font-size','11');
     text.setAttribute('font-family','VT323,monospace');
     text.setAttribute('text-anchor','middle');
     text.textContent = label;
     ticksG.appendChild(text);
   });
 
-  // Minor ticks between major positions (10 per gap)
+  // Minor ticks between major positions (10 per gap, every 5th is mid-tick)
   const degPositions = [270,315,360,45,90];
   for (let i = 0; i < degPositions.length - 1; i++) {
     let start = degPositions[i], end = degPositions[i+1];
     if (end < start) end += 360;
     for (let j = 1; j < 10; j++) {
       const d = ((start + (end - start) * j / 10) % 360);
-      const [x1,y1] = polar(d, r - 3);
-      const [x2,y2] = polar(d, r + 3);
+      const isMid = j === 5;
+      const inner = isMid ? r - 5 : r - 3;
+      const outer = isMid ? r + 5 : r + 3;
+      const [x1,y1] = polar(d, inner);
+      const [x2,y2] = polar(d, outer);
       const line = document.createElementNS('http://www.w3.org/2000/svg','line');
       line.setAttribute('x1',x1); line.setAttribute('y1',y1);
       line.setAttribute('x2',x2); line.setAttribute('y2',y2);
-      line.setAttribute('stroke','#0A4A0A'); line.setAttribute('stroke-width','1');
+      line.setAttribute('stroke', isMid ? '#20C020' : '#1A5A1A');
+      line.setAttribute('stroke-width', isMid ? '1.5' : '1');
       ticksG.appendChild(line);
     }
   }
@@ -1126,6 +1175,36 @@ setInterval(() => {
 updateThermalDisplay(thermalTemp);
 renderNeedle(0);
 
+// ═══════════════════════════════════════════════
+//  SESSION TIMER
+// ═══════════════════════════════════════════════
+const sessionTimerEl = document.getElementById('session-timer');
+let sessionStartTime = Date.now();
+setInterval(() => {
+  const elapsed = Math.floor((Date.now() - sessionStartTime) / 1000);
+  const m = String(Math.floor(elapsed / 60)).padStart(2, '0');
+  const s = String(elapsed % 60).padStart(2, '0');
+  sessionTimerEl.textContent = m + ':' + s;
+}, 1000);
+
+// ─── RESTART BUTTON ───
+document.getElementById('restart-btn').addEventListener('click', () => {
+  // Reset timer
+  sessionStartTime = Date.now();
+  sessionTimerEl.textContent = '00:00';
+
+  // Reset touch counter
+  sessionTouchCount = 0;
+  touchSessionCountEl.textContent = '0';
+
+  // Reset thermal anomaly counters
+  tempSpikeCount = 0;
+  tempEventCountEl.textContent = '0';
+  thermalAnomalyCount.textContent = '0';
+  tempHistory = [];
+  tempAlertCooldown = false;
+});
+
 // Sample temperature warning button
 document.getElementById('temp-sample-btn').addEventListener('click', speakTempWarning);
 
@@ -1147,13 +1226,14 @@ const QUESTIONS = [
   "Is there something you are looking for that I might be able to help you find?"
 ];
 
+// Shuffle into pool; never repeat until all shown
 let questionPool = [];
 let lastQuestion = '';
 
 function pickQuestion() {
   if (questionPool.length === 0) {
+    // Full cycle done — reshuffle, but don't start with the last shown
     questionPool = [...QUESTIONS].sort(() => Math.random() - 0.5);
-    // Avoid same question twice in a row across reshuffles
     if (questionPool[0] === lastQuestion && questionPool.length > 1) {
       questionPool.push(questionPool.shift());
     }
