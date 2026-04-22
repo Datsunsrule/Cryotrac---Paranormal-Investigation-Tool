@@ -62,6 +62,7 @@
   #header {
     display: flex;
     flex-direction: column;
+    align-items: center;
     padding: 2px 0 1px;
     flex-shrink: 0;
   }
@@ -71,13 +72,14 @@
     text-shadow: var(--glow);
     white-space: nowrap;
     line-height: 1;
+    text-align: center;
   }
   #header .subtitle {
-    font-size: 10px;
+    font-size: 14px;
     letter-spacing: 2px;
     color: var(--mid);
     white-space: nowrap;
-    text-align: right;
+    text-align: center;
     line-height: 1.1;
   }
   #header .subtitle::after {
@@ -98,7 +100,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    font-size: 12px;
+    font-size: 17px;
     letter-spacing: 3px;
     color: var(--mid);
     margin-bottom: 2px;
@@ -158,21 +160,24 @@
   @keyframes flicker { 0%,100%{opacity:1} 50%{opacity:0.4} }
 
   #power-btn {
-    width: 32px; height: 32px;
+    padding: 0 12px;
+    height: 30px;
     background: transparent;
-    border: 1px solid var(--dim);
+    border: 2px solid var(--dim);
     color: var(--dim);
     font-family: 'VT323', monospace;
     font-size: 18px;
+    letter-spacing: 3px;
     cursor: pointer;
     display: flex; align-items: center; justify-content: center;
-    transition: all 0.1s;
+    transition: all 0.15s;
     flex-shrink: 0;
   }
   #power-btn.on {
     border-color: var(--bright);
     color: var(--bright);
-    box-shadow: var(--glow-sm);
+    background: rgba(57, 255, 20, 0.08);
+    box-shadow: var(--glow-sm), inset 0 0 8px rgba(57,255,20,0.1);
   }
 
   #readout-strip {
@@ -200,6 +205,28 @@
     animation: pulse 0.5s ease-in-out infinite alternate;
   }
   @keyframes pulse { from{box-shadow:var(--glow-sm)} to{box-shadow:var(--glow)} }
+
+  #touch-session-box {
+    border: 1px solid var(--dim);
+    padding: 3px 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-shrink: 0;
+    width: 100%;
+  }
+  #touch-session-label {
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--mid);
+  }
+  #touch-session-count {
+    font-size: 22px;
+    letter-spacing: 2px;
+    text-shadow: var(--glow);
+    min-width: 30px;
+    text-align: right;
+  }
 
   /* Panel anomaly flash */
   @keyframes panel-flash {
@@ -306,6 +333,47 @@
     letter-spacing: 2px;
     text-shadow: var(--glow);
   }
+  #temp-sample-btn {
+    width: 100%;
+    height: 24px;
+    background: transparent;
+    border: 1px solid var(--dim);
+    color: var(--dim);
+    font-family: 'VT323', monospace;
+    font-size: 12px;
+    letter-spacing: 2px;
+    cursor: pointer;
+    transition: all 0.15s;
+    flex-shrink: 0;
+  }
+  #temp-sample-btn:active, #temp-sample-btn:hover {
+    border-color: var(--bright);
+    color: var(--bright);
+    box-shadow: var(--glow-sm);
+  }
+  #thermal-anomaly-box {
+    border: 1px solid var(--dim);
+    padding: 3px 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-shrink: 0;
+  }
+  #thermal-anomaly-label {
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--mid);
+  }
+  #thermal-anomaly-count {
+    font-size: 22px;
+    letter-spacing: 2px;
+    text-shadow: var(--glow);
+    min-width: 30px;
+    text-align: right;
+  }
+  #thermal-anomaly-count.spike {
+    animation: flicker 0.15s step-end 6;
+  }
   #temp-event-counter {
     font-size: 11px;
     letter-spacing: 2px;
@@ -372,7 +440,7 @@
   <!-- HEADER -->
   <div id="header">
     <div class="appname">CRYOTRAC</div>
-    <div class="subtitle">PARANORMAL SIG-METER&nbsp;</div>
+    <div class="subtitle">PARANORMAL INVESTIGATION TOOL&nbsp;</div>
   </div>
   <div class="divider"></div>
 
@@ -380,7 +448,7 @@
   <div class="panel" id="ch01-panel">
     <div class="panel-header">
       <span><span class="ch-label">CH-01</span> &nbsp;SCREEN TOUCH SENSOR</span>
-      <button id="power-btn" title="Power">⏻</button>
+      <button id="power-btn">ON</button>
     </div>
     <div id="ch01-body">
       <div id="ch01-top">
@@ -413,6 +481,10 @@
         <div class="readout-field"><div class="readout-label">AREA</div><div class="readout-val" id="rs-area">0.00</div></div>
         <div class="readout-field"><div class="readout-label">ZONE</div><div id="zone-val"></div></div>
       </div>
+      <div id="touch-session-box">
+        <div id="touch-session-label">NUMBER OF TOUCHES THIS SESSION</div>
+        <div id="touch-session-count">0</div>
+      </div>
     </div>
   </div>
   <div class="divider"></div>
@@ -442,6 +514,11 @@
       <div id="thermal-bottom">
         <div id="thermal-status" class="status-clear">AMBIENT</div>
         <div id="thermal-readout">--.-°F</div>
+      </div>
+      <button id="temp-sample-btn">▶ PLAY SAMPLE TEMPERATURE CHANGE WARNING</button>
+      <div id="thermal-anomaly-box">
+        <div id="thermal-anomaly-label">NUMBER OF THERMAL SENSOR ANOMALIES THIS SESSION</div>
+        <div id="thermal-anomaly-count">0</div>
       </div>
     </div>
   </div>
@@ -684,8 +761,10 @@ const rsFrc     = document.getElementById('rs-frc');
 const rsArea    = document.getElementById('rs-area');
 const zoneVal   = document.getElementById('zone-val');
 
-let activePointers = {};
-let jitterTimeout  = null;
+let activePointers   = {};
+let jitterTimeout    = null;
+let sessionTouchCount = 0;
+const touchSessionCountEl = document.getElementById('touch-session-count');
 
 function computeSignal() {
   const ptrs = Object.values(activePointers);
@@ -745,18 +824,22 @@ function startDecay() {
   }, 80);
 }
 
-ch01Panel.addEventListener('pointerdown', e=>{
+document.addEventListener('pointerdown', e=>{
   if (!ch01On) return;
+  // Allow power button clicks to pass through without triggering sensor
+  if (e.target === powerBtn) return;
   ensureAudio();
   e.preventDefault();
   activePointers[e.pointerId] = {
     force: e.pressure||0,
     area:  (e.width||0)*(e.height||0)
   };
+  sessionTouchCount++;
+  touchSessionCountEl.textContent = sessionTouchCount;
   updateCh01Display(computeSignal(), activePointers);
 }, {passive:false});
 
-ch01Panel.addEventListener('pointermove', e=>{
+document.addEventListener('pointermove', e=>{
   if (!ch01On || !activePointers[e.pointerId]) return;
   activePointers[e.pointerId] = {
     force: e.pressure||0,
@@ -768,7 +851,8 @@ ch01Panel.addEventListener('pointermove', e=>{
 }, {passive:true});
 
 ['pointerup','pointercancel'].forEach(ev=>{
-  ch01Panel.addEventListener(ev, e=>{
+  document.addEventListener(ev, e=>{
+    if (!activePointers[e.pointerId]) return;
     delete activePointers[e.pointerId];
     if (Object.keys(activePointers).length === 0) startDecay();
     else updateCh01Display(computeSignal(), activePointers);
@@ -784,10 +868,12 @@ powerBtn.addEventListener('click', ()=>{
   if (!ch01On) {
     ch01On = true;
     powerBtn.classList.add('on');
+    powerBtn.textContent = 'OFF';
     ch01Stat.className='status-clear'; ch01Stat.textContent='CLEAR';
   } else {
     ch01On = false;
     powerBtn.classList.remove('on');
+    powerBtn.textContent = 'ON';
     activePointers={};
     ch01Signal=0;
     clearInterval(ch01Decay); ch01Decay=null;
@@ -947,29 +1033,39 @@ const thermalReadout     = document.getElementById('thermal-readout');
 const thermalStatus      = document.getElementById('thermal-status');
 const tempEventCounter   = document.getElementById('temp-event-counter');
 const tempEventCountEl   = document.getElementById('temp-event-count');
+const thermalAnomalyCount= document.getElementById('thermal-anomaly-count');
 let thermalTemp          = 70; // default baseline °F
 let thermalBaseline      = 70;
 let tempHistory          = []; // { temp, time } rolling 60s window
 let tempSpikeCount       = 0;
 let tempAlertCooldown    = false;
 
-function triggerTempAlert() {
-  if (tempAlertCooldown) return;
-  tempAlertCooldown = true;
-
-  // Increment counter + flash
-  tempSpikeCount++;
-  tempEventCountEl.textContent = tempSpikeCount;
-  tempEventCounter.classList.add('spike');
-  setTimeout(() => tempEventCounter.classList.remove('spike'), 1500);
-
-  // Voice alert
+function speakTempWarning() {
   speechSynthesis.cancel();
   const utt = new SpeechSynthesisUtterance('Temperature change detected');
   utt.rate   = 1.0;
   utt.pitch  = 0.9;
   utt.volume = 1.0;
   speechSynthesis.speak(utt);
+}
+
+function triggerTempAlert() {
+  if (tempAlertCooldown) return;
+  tempAlertCooldown = true;
+
+  // Increment both counters + flash
+  tempSpikeCount++;
+  tempEventCountEl.textContent = tempSpikeCount;
+  thermalAnomalyCount.textContent = tempSpikeCount;
+  tempEventCounter.classList.add('spike');
+  thermalAnomalyCount.classList.add('spike');
+  setTimeout(() => {
+    tempEventCounter.classList.remove('spike');
+    thermalAnomalyCount.classList.remove('spike');
+  }, 1500);
+
+  // Voice alert
+  speakTempWarning();
 
   // Cooldown so it can't re-fire until the next distinct event
   setTimeout(() => { tempAlertCooldown = false; }, 15000);
@@ -1048,6 +1144,9 @@ setInterval(() => {
 // Init display immediately
 updateThermalDisplay(thermalTemp);
 renderNeedle(0);
+
+// Sample temperature warning button
+document.getElementById('temp-sample-btn').addEventListener('click', speakTempWarning);
 
 // ═══════════════════════════════════════════════
 //  INVESTIGATIVE QUESTIONS
