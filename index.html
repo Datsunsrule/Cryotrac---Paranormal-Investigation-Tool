@@ -306,6 +306,54 @@
     letter-spacing: 2px;
     text-shadow: var(--glow);
   }
+
+  /* ─── QUESTIONS PANEL ─── */
+  #ch03-panel { flex: 0.6; }
+
+  #questions-panel {
+    flex: 0 0 auto;
+    border: 1px solid var(--bright);
+    box-shadow: var(--glow-sm);
+    padding: 4px 8px 5px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-top: 3px;
+  }
+  #questions-title {
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: var(--mid);
+    flex-shrink: 0;
+    line-height: 1;
+  }
+  #question-text {
+    font-size: 14px;
+    letter-spacing: 1px;
+    color: var(--bright);
+    line-height: 1.2;
+    flex: 1;
+    min-height: 42px;
+  }
+  #next-question-btn {
+    width: 100%;
+    height: 24px;
+    background: transparent;
+    border: 1px solid var(--dim);
+    color: var(--dim);
+    font-family: 'VT323', monospace;
+    font-size: 14px;
+    letter-spacing: 3px;
+    cursor: pointer;
+    transition: all 0.15s;
+    flex-shrink: 0;
+  }
+  #next-question-btn:active,
+  #next-question-btn:hover {
+    border-color: var(--bright);
+    color: var(--bright);
+    box-shadow: var(--glow-sm);
+  }
 </style>
 </head>
 <body>
@@ -385,6 +433,14 @@
         <div id="thermal-readout">--.-°F</div>
       </div>
     </div>
+  </div>
+  <div class="divider"></div>
+
+  <!-- INVESTIGATIVE QUESTIONS -->
+  <div id="questions-panel">
+    <div id="questions-title">SAMPLE INVESTIGATIVE QUESTIONS</div>
+    <div id="question-text"></div>
+    <button id="next-question-btn">NEXT QUESTION ▶</button>
   </div>
 
 </div>
@@ -938,6 +994,54 @@ setInterval(() => {
 // Init display immediately
 updateThermalDisplay(thermalTemp);
 renderNeedle(0);
+
+// ═══════════════════════════════════════════════
+//  INVESTIGATIVE QUESTIONS
+// ═══════════════════════════════════════════════
+const QUESTIONS = [
+  "Is there someone here who would like to communicate with me?",
+  "I mean no disrespect by being here; may I ask you a few questions?",
+  "If you are able, could you please give me a sign — a sound, a touch, or touch the phone screen — so that I know you are with me?",
+  "What is your name, or what would you like to be called?",
+  "Do you know that you have passed on, or are you still trying to understand your situation?",
+  "Is there anything you feel you haven't been able to say or do?",
+  "Do you remember who you were or what your life was like?",
+  "Is there a reason you have chosen to remain in this place?",
+  "Is there anything you need from me to help you find peace?",
+  "I am here to listen if you have a message you need to deliver to someone else.",
+  "Would you like me to leave?",
+  "Is there something you are looking for that I might be able to help you find?"
+];
+
+let questionPool = [];
+let lastQuestion = '';
+
+function pickQuestion() {
+  if (questionPool.length === 0) {
+    questionPool = [...QUESTIONS].sort(() => Math.random() - 0.5);
+    // Avoid same question twice in a row across reshuffles
+    if (questionPool[0] === lastQuestion && questionPool.length > 1) {
+      questionPool.push(questionPool.shift());
+    }
+  }
+  lastQuestion = questionPool.shift();
+  return lastQuestion;
+}
+
+const questionTextEl = document.getElementById('question-text');
+const nextQuestionBtn = document.getElementById('next-question-btn');
+
+function showNextQuestion() {
+  questionTextEl.style.opacity = '0';
+  setTimeout(() => {
+    questionTextEl.textContent = pickQuestion();
+    questionTextEl.style.opacity = '1';
+  }, 150);
+}
+
+questionTextEl.style.transition = 'opacity 0.15s';
+showNextQuestion();
+nextQuestionBtn.addEventListener('click', showNextQuestion);
 </script>
 </body>
 </html>
