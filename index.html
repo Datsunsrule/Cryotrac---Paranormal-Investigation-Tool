@@ -649,19 +649,7 @@ function ensureAudio() {
   gain01.connect(audioCtx.destination);
   osc01.start();
 
-  // Ghostec oscillator (fifth above)
-  oscGh   = audioCtx.createOscillator();
-  gainGh  = audioCtx.createGain();
-  filterGh= audioCtx.createBiquadFilter();
-  oscGh.type = 'sine';
-  filterGh.type = 'lowpass';
-  filterGh.frequency.value = 800;
-  filterGh.Q.value = 1.2;
-  gainGh.gain.value = 0;
-  oscGh.connect(filterGh);
-  filterGh.connect(gainGh);
-  gainGh.connect(audioCtx.destination);
-  oscGh.start();
+  // Ghostec oscillator removed — TTS words are the sole audio for this panel
 }
 
 function setAudio01(signal) {
@@ -673,25 +661,8 @@ function setAudio01(signal) {
   gain01.gain.setTargetAtTime(g, t, 0.08);
 }
 
-function setAudioGhostec(on) {
-  if (!audioCtx) return;
-  ghostecAudioOn = on;
-  const t = audioCtx.currentTime;
-  if (on) {
-    const freq = 90 + (ch01Signal / 100) * 540;
-    oscGh.frequency.setTargetAtTime(freq, t, 0.08);
-    gainGh.gain.setTargetAtTime(0.13, t, 0.08);
-  } else {
-    gainGh.gain.setTargetAtTime(0, t, 0.08);
-  }
-}
-
-function updateGhostecAudioFreq() {
-  if (!audioCtx || !ghostecAudioOn) return;
-  const t = audioCtx.currentTime;
-  const freq = 90 + (ch01Signal / 100) * 540;
-  oscGh.frequency.setTargetAtTime(freq, t, 0.08);
-}
+function setAudioGhostec(on) { /* oscillator removed — no-op */ }
+function updateGhostecAudioFreq() { /* oscillator removed — no-op */ }
 
 // ═══════════════════════════════════════════════
 //  CH-01 — NEEDLE RENDERING
