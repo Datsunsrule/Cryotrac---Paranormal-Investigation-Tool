@@ -306,6 +306,16 @@
     letter-spacing: 2px;
     text-shadow: var(--glow);
   }
+  #temp-event-counter {
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: var(--mid);
+    transition: color 0.1s, text-shadow 0.1s;
+  }
+  #temp-event-counter.spike {
+    color: var(--bright);
+    text-shadow: var(--glow);
+  }
 
   /* ─── QUESTIONS PANEL ─── */
   #ch03-panel { flex: 0.6; }
@@ -425,6 +435,7 @@
   <div class="panel" id="ch03-panel">
     <div class="panel-header">
       <span><span class="ch-label">CH-03</span> &nbsp;THERMAL SENSOR</span>
+      <span id="temp-event-counter" title="Temperature spike events this session">ΔTEMP: <span id="temp-event-count">0</span></span>
     </div>
     <div id="ch03-body">
       <div id="thermal-bar-wrap"></div>
@@ -932,10 +943,51 @@ ghostecPlayBtn.addEventListener('click', ()=>{
 // ═══════════════════════════════════════════════
 //  CH-03 THERMAL
 // ═══════════════════════════════════════════════
-const thermalReadout = document.getElementById('thermal-readout');
-const thermalStatus  = document.getElementById('thermal-status');
-let thermalTemp = 70; // default baseline °F
-let thermalBaseline = 70;
+const thermalReadout     = document.getElementById('thermal-readout');
+const thermalStatus      = document.getElementById('thermal-status');
+const tempEventCounter   = document.getElementById('temp-event-counter');
+const tempEventCountEl   = document.getElementById('temp-event-count');
+let thermalTemp          = 70; // default baseline °F
+let thermalBaseline      = 70;
+let tempHistory          = []; // { temp, time } rolling 60s window
+let tempSpikeCount       = 0;
+let tempAlertCooldown    = false;
+
+function triggerTempAlert() {
+  if (tempAlertCooldown) return;
+  tempAlertCooldown = true;
+
+  // Increment counter + flash
+  tempSpikeCount++;
+  tempEventCountEl.textContent = tempSpikeCount;
+  tempEventCounter.classList.add('spike');
+  setTimeout(() => tempEventCounter.classList.remove('spike'), 1500);
+
+  // Voice alert
+  speechSynthesis.cancel();
+  const utt = new SpeechSynthesisUtterance('Temperature change detected');
+  utt.rate   = 1.0;
+  utt.pitch  = 0.9;
+  utt.volume = 1.0;
+  speechSynthesis.speak(utt);
+
+  // Cooldown so it can't re-fire until the next distinct event
+  setTimeout(() => { tempAlertCooldown = false; }, 15000);
+}
+
+function checkTempSpike(newTemp) {
+  const now = Date.now();
+  // Record reading
+  tempHistory.push({ temp: newTemp, time: now });
+  // Purge readings older than 60 seconds
+  tempHistory = tempHistory.filter(r => now - r.time <= 60000);
+  // Compare current to oldest reading in the 60s window
+  if (tempHistory.length > 1) {
+    const oldest = tempHistory[0];
+    const delta  = Math.abs(newTemp - oldest.temp);
+    if (delta >= 5) triggerTempAlert();
+  }
+}
 
 function updateThermalDisplay(tempF) {
   thermalReadout.textContent = tempF.toFixed(1) + '°F';
@@ -967,6 +1019,7 @@ if ('AmbientLightSensor' in window || 'AmbientTemperatureSensor' in window) {
       // reading in °C → convert to °F
       thermalTemp = sensor.temperature * 9/5 + 32;
       thermalBaseline = thermalTemp;
+      checkTempSpike(thermalTemp);
       updateThermalDisplay(thermalTemp);
       sensorActive = true;
     });
@@ -988,6 +1041,7 @@ setInterval(() => {
   const drift = (Math.random() - 0.5) * 0.8;
   const pull  = (thermalBaseline - thermalTemp) * 0.05;
   thermalTemp = Math.max(50, Math.min(120, thermalTemp + drift + pull));
+  checkTempSpike(thermalTemp);
   updateThermalDisplay(thermalTemp);
 }, 1000);
 
