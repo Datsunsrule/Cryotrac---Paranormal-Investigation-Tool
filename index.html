@@ -183,15 +183,20 @@
     display: flex;
     justify-content: flex-start;
     align-items: center;
-    gap: 6px;
   }
   #header-logo {
     width: 46px;
     height: 46px;
     object-fit: cover;
-    /* screen blend makes black bg fully transparent — no box, only the green icon glows */
     mix-blend-mode: screen;
     opacity: 0.92;
+    cursor: pointer;
+    transition: opacity 0.15s;
+    /* 48px tap target */
+    padding: 1px;
+  }
+  #header-logo:active {
+    opacity: 0.6;
   }
   #session-timer {
     font-size: 18px;
@@ -217,26 +222,6 @@
     padding: 0;
   }
   #restart-btn:hover, #restart-btn:active {
-    border-color: var(--bright);
-    color: var(--bright);
-    box-shadow: var(--glow-sm);
-  }
-  #home-header-btn {
-    background: transparent;
-    border: 1px solid var(--dim);
-    color: var(--dim);
-    font-size: 20px;
-    min-width: 48px;
-    min-height: 48px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.15s;
-    line-height: 1;
-    padding: 0;
-  }
-  #home-header-btn:hover, #home-header-btn:active {
     border-color: var(--bright);
     color: var(--bright);
     box-shadow: var(--glow-sm);
@@ -796,8 +781,7 @@
   <div id="header">
     <div id="header-row1">
       <div id="header-logo-wrap">
-        <img id="header-logo" src="logofinal.jpg" alt="Cryotrac logo"/>
-        <button id="home-header-btn">⌂</button>
+        <img id="header-logo" src="logofinal.jpg" alt="Cryotrac logo — tap to return home"/>
       </div>
       <div class="appname">CRYOTRAC</div>
       <div id="header-controls">
@@ -950,6 +934,13 @@
       <div class="instr-section">
         <div class="instr-heading">? — INVESTIGATIVE QUESTIONS</div>
         <p class="instr-text">Found on both pages. Use these prompts to communicate during a session. Tap <span class="instr-key">▶ READ ALOUD</span> to have the question spoken out loud. Tap <span class="instr-key">NEXT QUESTION</span> to cycle to the next prompt. Both pages always show the same question.</p>
+      </div>
+
+      <div class="instr-divider"></div>
+
+      <div class="instr-section">
+        <div class="instr-heading">⊙ — RETURN TO HOME</div>
+        <p class="instr-text">Tap the <span class="instr-key">Cryotrac logo</span> in the top left at any time to return to the home screen. The ambient music will restart.</p>
       </div>
 
       <div class="instr-divider"></div>
@@ -1884,8 +1875,8 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
   };
 })();
 
-// House button in header — go to home screen
-document.getElementById('home-header-btn').addEventListener('click', () => {
+// Logo tap — return to home screen
+document.getElementById('header-logo').addEventListener('click', () => {
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
   if (typeof ghostecStop === 'function' && ghostecRunning) ghostecStop(false);
   window.showHomeScreen();
