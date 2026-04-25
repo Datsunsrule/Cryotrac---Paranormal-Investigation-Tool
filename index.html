@@ -1540,15 +1540,11 @@ if (!sensorActive && 'getBattery' in navigator) {
 }
 
 // Simulated drift — always running as fallback
-// Slow sine wave sweeps through COLD→AMBIENT→WARM→HOT so all colors show
-let _simTick = 0;
 setInterval(() => {
   if (sensorActive) return;
-  _simTick++;
-  // Sine wave: period ~90s, amplitude ±22°F around baseline → hits all zones
-  const wave  = Math.sin(_simTick * (2 * Math.PI / 90)) * 22;
-  const noise = (Math.random() - 0.5) * 1.5;
-  thermalTemp = Math.max(50, Math.min(120, thermalBaseline + wave + noise));
+  const drift = (Math.random() - 0.5) * 0.8;
+  const pull  = (thermalBaseline - thermalTemp) * 0.05;
+  thermalTemp = Math.max(50, Math.min(120, thermalTemp + drift + pull));
   checkTempSpike(thermalTemp);
   updateThermalDisplay(thermalTemp);
 }, 1000);
