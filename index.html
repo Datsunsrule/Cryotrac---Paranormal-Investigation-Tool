@@ -26,6 +26,77 @@
     position: relative;
   }
 
+  /* ─── HOME SCREEN ─── */
+  #home-screen {
+    position: fixed;
+    inset: 0;
+    z-index: 5000;
+    background: #000;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    transition: opacity 0.8s ease;
+  }
+  #home-screen.fade-out {
+    opacity: 0;
+    pointer-events: none;
+  }
+  #home-logo-wrap {
+    width: 72vmin;
+    height: 72vmin;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: homePulse 3s ease-in-out infinite;
+  }
+  #home-logo-img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    mix-blend-mode: screen;
+  }
+  @keyframes homePulse {
+    0%,100% { filter: drop-shadow(0 0 10px #39FF14) drop-shadow(0 0 30px #39FF1440); opacity: 0.92; }
+    50%      { filter: drop-shadow(0 0 18px #39FF14) drop-shadow(0 0 50px #39FF1480); opacity: 1; }
+  }
+  #home-enter-btn {
+    margin-top: 36px;
+    background: transparent;
+    border: 1px solid var(--mid);
+    color: var(--bright);
+    font-family: 'VT323', monospace;
+    font-size: 22px;
+    letter-spacing: 6px;
+    padding: 10px 40px;
+    min-height: 48px;
+    cursor: pointer;
+    text-shadow: var(--glow-sm);
+    box-shadow: 0 0 6px #39FF1440;
+    transition: all 0.2s;
+    animation: borderPulse 2s ease-in-out infinite;
+  }
+  #home-enter-btn:hover, #home-enter-btn:active {
+    border-color: var(--bright);
+    box-shadow: var(--glow);
+  }
+  @keyframes borderPulse {
+    0%,100% { border-color: var(--mid); }
+    50%      { border-color: var(--bright); box-shadow: 0 0 10px #39FF1460; }
+  }
+  #home-disclaimer {
+    position: absolute;
+    bottom: 28px;
+    left: 0; right: 0;
+    text-align: center;
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    color: #0A3A0A;
+    padding: 0 24px;
+    line-height: 1.5;
+  }
+
   /* Logo watermark — sits between black bg and app content */
   body::before {
     content: '';
@@ -684,6 +755,20 @@
 </style>
 </head>
 <body>
+
+<!-- ═══ HOME SCREEN ═══ -->
+<div id="home-screen">
+  <div id="home-logo-wrap">
+    <img id="home-logo-img" src="logofinal.jpg" alt="Cryotrac"/>
+  </div>
+  <button id="home-enter-btn">▶ &nbsp;ENTER</button>
+  <div id="home-disclaimer">
+    CRYOTRAC IS DESIGNED FOR ENTERTAINMENT PURPOSES ONLY.<br>
+    ALL SENSOR READINGS AND GENERATED CONTENT ARE SIMULATED<br>
+    AND SHOULD NOT BE INTERPRETED AS EVIDENCE OF PARANORMAL ACTIVITY.
+  </div>
+</div>
+
 <div id="app">
 
   <!-- HEADER -->
@@ -1582,6 +1667,113 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     if (target !== 'page-ghostec' && ghostecRunning) ghostecStop(false);
   });
 });
+
+// ═══════════════════════════════════════════════
+//  HOME SCREEN + SYNTH
+// ═══════════════════════════════════════════════
+(function() {
+  const homeScreen  = document.getElementById('home-screen');
+  const enterBtn    = document.getElementById('home-enter-btn');
+
+  // Note frequencies: A4, C5, E4, F4, Bb4 (tritone)
+  const NOTES = {
+    A4: 440.00, C5: 523.25, E4: 329.63, F4: 349.23, Bb4: 466.16
+  };
+  const { A4, C5, E4, F4, Bb4 } = NOTES;
+
+  // 32-note ambient sequence — soft, mellow, slightly mysterious
+  const SEQUENCE = [
+    A4, E4, C5, A4,  F4,  E4, A4,  Bb4,
+    C5, A4, F4, E4,  Bb4, A4, C5,  E4,
+    F4, C5, A4, Bb4, E4,  F4, C5,  A4,
+    E4, A4, Bb4, F4, C5,  E4, A4,  F4
+  ];
+
+  const NOTE_DUR   = 1.4;   // seconds per note
+  const ATTACK     = 0.35;
+  const RELEASE    = 0.55;
+  const MASTER_VOL = 0.12;
+
+  let audioCtx    = null;
+  let masterGain  = null;
+  let loopTimeout = null;
+  let playing     = false;
+
+  function scheduleLoop(startOffset) {
+    if (!playing) return;
+    SEQUENCE.forEach((freq, i) => {
+      const t = startOffset + i * NOTE_DUR;
+
+      // Primary oscillator — sine for mellowness
+      const osc1 = audioCtx.createOscillator();
+      const g1   = audioCtx.createGain();
+      osc1.type = 'sine';
+      osc1.frequency.value = freq;
+      osc1.connect(g1);
+      g1.connect(masterGain);
+      g1.gain.setValueAtTime(0, t);
+      g1.gain.linearRampToValueAtTime(1, t + ATTACK);
+      g1.gain.setValueAtTime(1, t + NOTE_DUR - RELEASE);
+      g1.gain.linearRampToValueAtTime(0, t + NOTE_DUR);
+      osc1.start(t);
+      osc1.stop(t + NOTE_DUR + 0.05);
+
+      // Sub oscillator — one octave down, very quiet, adds warmth
+      const osc2 = audioCtx.createOscillator();
+      const g2   = audioCtx.createGain();
+      osc2.type = 'sine';
+      osc2.frequency.value = freq / 2;
+      osc2.connect(g2);
+      g2.connect(masterGain);
+      g2.gain.setValueAtTime(0, t);
+      g2.gain.linearRampToValueAtTime(0.3, t + ATTACK);
+      g2.gain.setValueAtTime(0.3, t + NOTE_DUR - RELEASE);
+      g2.gain.linearRampToValueAtTime(0, t + NOTE_DUR);
+      osc2.start(t);
+      osc2.stop(t + NOTE_DUR + 0.05);
+    });
+
+    const loopLen = SEQUENCE.length * NOTE_DUR;
+    loopTimeout = setTimeout(() => scheduleLoop(audioCtx.currentTime), (loopLen - 0.5) * 1000);
+  }
+
+  function startMusic() {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return;
+    audioCtx   = new AC();
+    masterGain = audioCtx.createGain();
+    masterGain.gain.value = MASTER_VOL;
+    masterGain.connect(audioCtx.destination);
+    playing = true;
+    scheduleLoop(audioCtx.currentTime + 0.1);
+  }
+
+  function stopMusic() {
+    playing = false;
+    clearTimeout(loopTimeout);
+    if (masterGain) {
+      masterGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.3);
+    }
+    setTimeout(() => {
+      if (audioCtx) { audioCtx.close(); audioCtx = null; }
+    }, 1200);
+  }
+
+  // Start music on first touch/click (browser autoplay policy)
+  let musicStarted = false;
+  function tryStartMusic() {
+    if (!musicStarted) { musicStarted = true; startMusic(); }
+  }
+  homeScreen.addEventListener('pointerdown', tryStartMusic, { once: false });
+  // Also try immediately (works on some browsers)
+  setTimeout(() => { if (!musicStarted) tryStartMusic(); }, 300);
+
+  enterBtn.addEventListener('click', () => {
+    stopMusic();
+    homeScreen.classList.add('fade-out');
+    setTimeout(() => { homeScreen.style.display = 'none'; }, 850);
+  });
+})();
 </script>
 </body>
 </html>
