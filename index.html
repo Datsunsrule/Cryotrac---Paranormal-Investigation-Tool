@@ -1265,6 +1265,7 @@ function updateThermalDisplay(tempF) {
   else if (tempF < 95)  { st='WARM';    sc='thermal-warm';    }
   else                  { st='HOT';     sc='thermal-hot';     }
   thermalStatus.className = sc; thermalStatus.textContent = st;
+  thermalReadout.className = sc;
 
   // Bar: 50°F=0segs, 120°F=20segs
   const pct  = Math.max(0, Math.min(1, (tempF - 50) / 70));
