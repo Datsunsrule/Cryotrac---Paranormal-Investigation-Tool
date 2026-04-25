@@ -1660,6 +1660,7 @@ readAloudBtn2.addEventListener('click', speakQuestion);
 document.querySelectorAll('.tab-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     const target = btn.dataset.page;
+    if (!target) return; // HOME button has no data-page — handled separately
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
     document.getElementById(target).classList.add('active');
