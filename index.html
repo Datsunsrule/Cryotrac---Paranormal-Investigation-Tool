@@ -12,21 +12,35 @@
     --bright: #39FF14;
     --mid:    #20C020;
     --dim:    #0A4A0A;
-    --bg:     #020802;
+    --bg:     #000000;
     --glow:   0 0 6px #39FF14, 0 0 12px #39FF14;
     --glow-sm:0 0 3px #39FF14, 0 0 7px #39FF14;
   }
 
   html, body {
     height: 100%;
-    background: var(--bg);
+    background: #000;
     color: var(--bright);
     font-family: 'VT323', monospace;
     overflow: hidden;
     position: relative;
   }
 
-  /* Scanlines */
+  /* Logo watermark — sits between black bg and app content */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url('logofinal.jpg');
+    background-size: 72%;
+    background-position: center;
+    background-repeat: no-repeat;
+    opacity: 0.07;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Scanlines — on top of everything */
   body::after {
     content: '';
     position: fixed;
@@ -49,6 +63,8 @@
     padding: 4px 10px;
     gap: 0;
     overflow: hidden;
+    position: relative;
+    z-index: 1;
   }
 
   .divider {
@@ -69,19 +85,40 @@
   #header-row1 {
     display: flex;
     justify-content: space-between;
-    align-items: baseline;
+    align-items: center;
   }
+  /* Right third — timer + restart */
+  #header-controls {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 6px;
+    flex: 1;
+  }
+  /* Center — app name */
   #header .appname {
     font-size: 30px;
     letter-spacing: 7px;
     text-shadow: var(--glow);
     white-space: nowrap;
     line-height: 1;
+    text-align: center;
+    flex: 1;
   }
-  #header-right {
+  /* Left third — logo */
+  #header-logo-wrap {
+    flex: 1;
     display: flex;
+    justify-content: flex-start;
     align-items: center;
-    gap: 6px;
+  }
+  #header-logo {
+    width: 46px;
+    height: 46px;
+    object-fit: cover;
+    /* screen blend makes black bg fully transparent — no box, only the green icon glows */
+    mix-blend-mode: screen;
+    opacity: 0.92;
   }
   #session-timer {
     font-size: 18px;
@@ -486,8 +523,11 @@
   <!-- HEADER -->
   <div id="header">
     <div id="header-row1">
+      <div id="header-logo-wrap">
+        <img id="header-logo" src="logofinal.jpg" alt="Cryotrac logo"/>
+      </div>
       <div class="appname">CRYOTRAC</div>
-      <div id="header-right">
+      <div id="header-controls">
         <div id="session-timer">00:00</div>
         <button id="restart-btn">↺</button>
       </div>
