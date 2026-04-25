@@ -1834,8 +1834,18 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
   homeScreen.addEventListener('pointerdown', tryStartMusic);
   setTimeout(() => { if (!musicStarted) tryStartMusic(); }, 300);
 
+  function goToScanner() {
+    // Always land on SCANNER page
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('page-scanner').classList.add('active');
+    const scannerTab = document.querySelector('.tab-btn[data-page="page-scanner"]');
+    if (scannerTab) scannerTab.classList.add('active');
+  }
+
   enterBtn.addEventListener('click', () => {
     stopMusic();
+    goToScanner();
     homeScreen.classList.add('fade-out');
     setTimeout(() => { homeScreen.style.display = 'none'; }, 850);
   });
