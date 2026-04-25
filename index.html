@@ -49,17 +49,17 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    animation: homePulse 3s ease-in-out infinite;
   }
   #home-logo-img {
     width: 100%;
     height: 100%;
     object-fit: contain;
     mix-blend-mode: screen;
+    animation: homePulse 3s ease-in-out infinite;
   }
   @keyframes homePulse {
-    0%,100% { filter: drop-shadow(0 0 10px #39FF14) drop-shadow(0 0 30px #39FF1440); opacity: 0.92; }
-    50%      { filter: drop-shadow(0 0 18px #39FF14) drop-shadow(0 0 50px #39FF1480); opacity: 1; }
+    0%,100% { opacity: 0.82; }
+    50%      { opacity: 1; }
   }
   #home-enter-btn {
     margin-top: 36px;
