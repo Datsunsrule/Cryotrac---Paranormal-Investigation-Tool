@@ -1683,169 +1683,41 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
 });
 
 // ═══════════════════════════════════════════════
-//  HOME SCREEN + SYNTH + DRUMS
+//  HOME SCREEN + MUSIC
 // ═══════════════════════════════════════════════
 (function() {
   const homeScreen = document.getElementById('home-screen');
   const enterBtn   = document.getElementById('home-enter-btn');
 
-  // Scale: C Db Eb F Gb Ab Bb C  (Locrian / exotic minor)
-  const C4=261.63, Db4=277.18, Eb4=311.13, F4=349.23,
-        Gb4=369.99, Ab4=415.30, Bb4=466.16, C5=523.25;
+  // MP3 player — loop enabled, starts muted until user gesture
+  const bgMusic = new Audio('The_Midnight_Perimeter.mp3');
+  bgMusic.loop   = true;
+  bgMusic.volume = 0.7;
 
-  // 32-note sequence — mixed order, resolves D4→C4 at loop boundary
-  const SEQUENCE = [
-    C4,  Gb4, Eb4, Bb4,  Ab4, F4,  Db4, C5,
-    Bb4, Ab4, Gb4, F4,   Eb4, Db4, C4,  Ab4,
-    F4,  Bb4, C5,  Gb4,  Eb4, Ab4, Db4, F4,
-    Bb4, C5,  Ab4, Gb4,  Eb4, F4,  Db4, Eb4
-  ];
-  // Last note Eb4 → first note C4: minor third descent, seamless
-
-  const NOTE_DUR  = 2.5;   // slower, longer notes
-  const ATTACK    = 0.6;
-  const RELEASE   = 1.0;
-  const SYNTH_VOL = 0.11;
-  const DRUM_VOL  = 0.07;  // distant — quiet and muffled
-  const BEAT      = 1.05;  // ~57 BPM, slow and heavy
-
-  let audioCtx   = null;
-  let synthGain  = null;
-  let drumGain   = null;
-  let synthTimer = null;
-  let drumTimer  = null;
-  let playing    = false;
-
-  // ── Kick drum ──────────────────────────────
-  function kick(t) {
-    const osc = audioCtx.createOscillator();
-    const env = audioCtx.createGain();
-    const lpf = audioCtx.createBiquadFilter();
-    lpf.type = 'lowpass'; lpf.frequency.value = 160;
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(95, t);
-    osc.frequency.exponentialRampToValueAtTime(38, t + 0.38);
-    env.gain.setValueAtTime(1, t);
-    env.gain.exponentialRampToValueAtTime(0.001, t + 0.5);
-    osc.connect(env); env.connect(lpf); lpf.connect(drumGain);
-    osc.start(t); osc.stop(t + 0.55);
-    // Distant echo
-    const osc2 = audioCtx.createOscillator();
-    const env2 = audioCtx.createGain();
-    const lpf2 = audioCtx.createBiquadFilter();
-    lpf2.type = 'lowpass'; lpf2.frequency.value = 120;
-    osc2.type = 'sine';
-    osc2.frequency.setValueAtTime(80, t + 0.22);
-    osc2.frequency.exponentialRampToValueAtTime(35, t + 0.55);
-    env2.gain.setValueAtTime(0.28, t + 0.22);
-    env2.gain.exponentialRampToValueAtTime(0.001, t + 0.7);
-    osc2.connect(env2); env2.connect(lpf2); lpf2.connect(drumGain);
-    osc2.start(t + 0.22); osc2.stop(t + 0.75);
-  }
-
-  // ── Snare drum ─────────────────────────────
-  function snare(t) {
-    const len  = Math.floor(audioCtx.sampleRate * 0.14);
-    const buf  = audioCtx.createBuffer(1, len, audioCtx.sampleRate);
-    const data = buf.getChannelData(0);
-    for (let i = 0; i < len; i++) data[i] = Math.random() * 2 - 1;
-
-    const src = audioCtx.createBufferSource(); src.buffer = buf;
-    const bpf = audioCtx.createBiquadFilter();
-    bpf.type = 'bandpass'; bpf.frequency.value = 1100; bpf.Q.value = 0.6;
-    const lpf = audioCtx.createBiquadFilter();
-    lpf.type = 'lowpass'; lpf.frequency.value = 2200;
-    const env = audioCtx.createGain();
-    env.gain.setValueAtTime(1, t);
-    env.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
-    src.connect(bpf); bpf.connect(lpf); lpf.connect(env); env.connect(drumGain);
-    src.start(t);
-    // Distant echo
-    const src2 = audioCtx.createBufferSource(); src2.buffer = buf;
-    const bpf2 = audioCtx.createBiquadFilter();
-    bpf2.type = 'bandpass'; bpf2.frequency.value = 700; bpf2.Q.value = 0.4;
-    const env2 = audioCtx.createGain();
-    env2.gain.setValueAtTime(0.22, t + 0.28);
-    env2.gain.exponentialRampToValueAtTime(0.001, t + 0.5);
-    src2.connect(bpf2); bpf2.connect(env2); env2.connect(drumGain);
-    src2.start(t + 0.28);
-  }
-
-  // ── Schedule 8 beats then loop ─────────────
-  function scheduleDrums(startT) {
-    if (!playing) return;
-    for (let b = 0; b < 8; b++) {
-      const t = startT + b * BEAT;
-      if (b % 2 === 0) kick(t);
-      else             snare(t);
-    }
-    drumTimer = setTimeout(
-      () => scheduleDrums(audioCtx.currentTime),
-      (8 * BEAT - 0.5) * 1000
-    );
-  }
-
-  // ── Schedule melody notes then loop ────────
-  function scheduleLoop(startT) {
-    if (!playing) return;
-    SEQUENCE.forEach((freq, i) => {
-      const t = startT + i * NOTE_DUR;
-      // Primary sine
-      const osc1 = audioCtx.createOscillator();
-      const g1   = audioCtx.createGain();
-      osc1.type = 'sine'; osc1.frequency.value = freq;
-      osc1.connect(g1); g1.connect(synthGain);
-      g1.gain.setValueAtTime(0, t);
-      g1.gain.linearRampToValueAtTime(1, t + ATTACK);
-      g1.gain.setValueAtTime(1, t + NOTE_DUR - RELEASE);
-      g1.gain.linearRampToValueAtTime(0, t + NOTE_DUR);
-      osc1.start(t); osc1.stop(t + NOTE_DUR + 0.1);
-      // Sub octave warmth
-      const osc2 = audioCtx.createOscillator();
-      const g2   = audioCtx.createGain();
-      osc2.type = 'sine'; osc2.frequency.value = freq / 2;
-      osc2.connect(g2); g2.connect(synthGain);
-      g2.gain.setValueAtTime(0, t);
-      g2.gain.linearRampToValueAtTime(0.28, t + ATTACK);
-      g2.gain.setValueAtTime(0.28, t + NOTE_DUR - RELEASE);
-      g2.gain.linearRampToValueAtTime(0, t + NOTE_DUR);
-      osc2.start(t); osc2.stop(t + NOTE_DUR + 0.1);
-    });
-    const loopLen = SEQUENCE.length * NOTE_DUR;
-    synthTimer = setTimeout(
-      () => scheduleLoop(audioCtx.currentTime),
-      (loopLen - 0.5) * 1000
-    );
-  }
+  let musicStarted = false;
 
   function startMusic() {
-    const AC = window.AudioContext || window.webkitAudioContext;
-    if (!AC) return;
-    audioCtx  = new AC();
-    synthGain = audioCtx.createGain();
-    synthGain.gain.value = SYNTH_VOL;
-    synthGain.connect(audioCtx.destination);
-    drumGain  = audioCtx.createGain();
-    drumGain.gain.value = DRUM_VOL;
-    drumGain.connect(audioCtx.destination);
-    playing = true;
-    scheduleLoop(audioCtx.currentTime + 0.1);
-    scheduleDrums(audioCtx.currentTime + 0.1);
+    if (musicStarted) return;
+    musicStarted = true;
+    bgMusic.currentTime = 0;
+    bgMusic.play().catch(() => {}); // browser may block until gesture — safe fail
   }
 
   function stopMusic() {
-    playing = false;
-    clearTimeout(synthTimer);
-    clearTimeout(drumTimer);
-    if (synthGain) synthGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.3);
-    if (drumGain)  drumGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.3);
-    setTimeout(() => { if (audioCtx) { audioCtx.close(); audioCtx = null; } }, 1200);
+    // Fade out over 800ms then pause
+    const steps = 16;
+    const start = bgMusic.volume;
+    let step = 0;
+    const fade = setInterval(() => {
+      step++;
+      bgMusic.volume = Math.max(0, start * (1 - step / steps));
+      if (step >= steps) {
+        clearInterval(fade);
+        bgMusic.pause();
+        bgMusic.volume = 0.7; // restore for next time
+      }
+    }, 50);
   }
-
-  let musicStarted = false;
-  function tryStartMusic() { if (!musicStarted) { musicStarted = true; startMusic(); } }
-  homeScreen.addEventListener('pointerdown', tryStartMusic);
-  setTimeout(() => { if (!musicStarted) tryStartMusic(); }, 300);
 
   function activateScanner() {
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -1856,22 +1728,28 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     if (tb) tb.classList.add('active');
   }
 
+  // Start music on first touch anywhere on home screen
+  homeScreen.addEventListener('pointerdown', startMusic, { once: true });
+
   enterBtn.addEventListener('click', () => {
     stopMusic();
-    activateScanner(); // set immediately so it's ready behind the fade
+    activateScanner();
     homeScreen.classList.add('fade-out');
     setTimeout(() => {
       homeScreen.style.display = 'none';
-      activateScanner(); // call again the moment screen is gone — belt and braces
+      activateScanner(); // belt and braces
     }, 850);
   });
 
-  // Exposed so the HOME tab button can return to this screen
+  // Exposed so logo tap can return here
   window.showHomeScreen = function() {
     musicStarted = false;
+    bgMusic.currentTime = 0;
+    bgMusic.volume = 0.7;
     homeScreen.style.display = 'flex';
     homeScreen.classList.remove('fade-out');
-    setTimeout(() => tryStartMusic(), 300);
+    // Re-attach the once listener for the next gesture
+    homeScreen.addEventListener('pointerdown', startMusic, { once: true });
   };
 })();
 
