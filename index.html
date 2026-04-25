@@ -90,7 +90,7 @@
     bottom: 28px;
     left: 0; right: 0;
     text-align: center;
-    font-size: 11px;
+    font-size: 12px;
     letter-spacing: 1.5px;
     color: #0A3A0A;
     padding: 0 24px;
@@ -746,7 +746,7 @@
     flex-shrink: 0;
   }
   .instr-disclaimer {
-    font-size: 11px;
+    font-size: 12px;
     letter-spacing: 2px;
     color: var(--dim);
     text-align: center;
@@ -1835,20 +1835,23 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
   homeScreen.addEventListener('pointerdown', tryStartMusic);
   setTimeout(() => { if (!musicStarted) tryStartMusic(); }, 300);
 
-  function goToScanner() {
-    // Always land on SCANNER page
+  function activateScanner() {
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    document.getElementById('page-scanner').classList.add('active');
-    const scannerTab = document.querySelector('.tab-btn[data-page="page-scanner"]');
-    if (scannerTab) scannerTab.classList.add('active');
+    const pg = document.getElementById('page-scanner');
+    if (pg) pg.classList.add('active');
+    const tb = document.querySelector('.tab-btn[data-page="page-scanner"]');
+    if (tb) tb.classList.add('active');
   }
 
   enterBtn.addEventListener('click', () => {
     stopMusic();
-    goToScanner();
+    activateScanner(); // set immediately so it's ready behind the fade
     homeScreen.classList.add('fade-out');
-    setTimeout(() => { homeScreen.style.display = 'none'; }, 850);
+    setTimeout(() => {
+      homeScreen.style.display = 'none';
+      activateScanner(); // call again the moment screen is gone — belt and braces
+    }, 850);
   });
 
   // Exposed so the HOME tab button can return to this screen
