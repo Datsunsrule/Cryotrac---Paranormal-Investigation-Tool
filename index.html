@@ -231,6 +231,12 @@
   .status-active   { color: var(--bright); text-shadow: var(--glow); }
   .status-anomaly  { color: var(--bright); text-shadow: var(--glow); animation: flicker 0.15s step-end infinite; }
   .status-offline  { color: var(--dim); }
+
+  /* Thermal-specific status colours */
+  .thermal-cold    { color: #00AAFF; text-shadow: 0 0 6px #00AAFF, 0 0 12px #00AAFF; }
+  .thermal-ambient { color: #39FF14; text-shadow: 0 0 6px #39FF14, 0 0 12px #39FF14; }
+  .thermal-warm    { color: #FFE600; text-shadow: 0 0 6px #FFE600, 0 0 12px #FFE600; }
+  .thermal-hot     { color: #FF6600; text-shadow: 0 0 6px #FF6600, 0 0 12px #FF6600; }
   @keyframes flicker { 0%,100%{opacity:1} 50%{opacity:0.4} }
 
   #power-btn {
@@ -1252,12 +1258,12 @@ function checkTempSpike(newTemp) {
 
 function updateThermalDisplay(tempF) {
   thermalReadout.textContent = tempF.toFixed(1) + '°F';
-  // Status
-  let st='AMBIENT', sc='status-clear';
-  if      (tempF < 65)  { st='COLD';    sc='status-offline'; }
-  else if (tempF < 80)  { st='AMBIENT'; sc='status-clear';   }
-  else if (tempF < 95)  { st='WARM';    sc='status-trace';   }
-  else                  { st='HOT';     sc='status-active';  }
+  // Status with colour-coded classes
+  let st='AMBIENT', sc='thermal-ambient';
+  if      (tempF < 65)  { st='COLD';    sc='thermal-cold';    }
+  else if (tempF < 80)  { st='AMBIENT'; sc='thermal-ambient'; }
+  else if (tempF < 95)  { st='WARM';    sc='thermal-warm';    }
+  else                  { st='HOT';     sc='thermal-hot';     }
   thermalStatus.className = sc; thermalStatus.textContent = st;
 
   // Bar: 50°F=0segs, 120°F=20segs
