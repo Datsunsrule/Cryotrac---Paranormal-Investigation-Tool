@@ -1700,7 +1700,11 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     if (musicStarted) return;
     musicStarted = true;
     bgMusic.currentTime = 0;
-    bgMusic.play().catch(() => {}); // browser may block until gesture — safe fail
+    bgMusic.play().catch(() => {
+      // Autoplay blocked — reset and retry on first touch
+      musicStarted = false;
+      homeScreen.addEventListener('pointerdown', startMusic, { once: true });
+    });
   }
 
   function stopMusic() {
@@ -1728,8 +1732,8 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     if (tb) tb.classList.add('active');
   }
 
-  // Start music on first touch anywhere on home screen
-  homeScreen.addEventListener('pointerdown', startMusic, { once: true });
+  // Try autoplay immediately; catch handles fallback to first touch
+  startMusic();
 
   enterBtn.addEventListener('click', () => {
     stopMusic();
