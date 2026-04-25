@@ -398,9 +398,30 @@
     transition: background 0.3s, box-shadow 0.3s;
     border-radius: 2px;
   }
-  .thermal-seg.lit-low  { background: #0A4A0A; }
-  .thermal-seg.lit-trail{ background: #20C020; box-shadow: 0 0 4px #20C020; }
-  .thermal-seg.lit-peak { background: var(--bright); box-shadow: var(--glow); }
+  /* Default (ambient) bar colours */
+  .thermal-seg.lit-low   { background: #0A4A0A; }
+  .thermal-seg.lit-trail { background: #20C020; box-shadow: 0 0 4px #20C020; }
+  .thermal-seg.lit-peak  { background: #39FF14; box-shadow: 0 0 6px #39FF14, 0 0 12px #39FF14; }
+
+  /* COLD — blue */
+  #thermal-bar-wrap.temp-cold .thermal-seg.lit-low   { background: #001A3A; }
+  #thermal-bar-wrap.temp-cold .thermal-seg.lit-trail { background: #0066CC; box-shadow: 0 0 4px #0066CC; }
+  #thermal-bar-wrap.temp-cold .thermal-seg.lit-peak  { background: #00AAFF; box-shadow: 0 0 6px #00AAFF, 0 0 12px #00AAFF; }
+
+  /* AMBIENT — green (same as default) */
+  #thermal-bar-wrap.temp-ambient .thermal-seg.lit-low   { background: #0A4A0A; }
+  #thermal-bar-wrap.temp-ambient .thermal-seg.lit-trail { background: #20C020; box-shadow: 0 0 4px #20C020; }
+  #thermal-bar-wrap.temp-ambient .thermal-seg.lit-peak  { background: #39FF14; box-shadow: 0 0 6px #39FF14, 0 0 12px #39FF14; }
+
+  /* WARM — yellow */
+  #thermal-bar-wrap.temp-warm .thermal-seg.lit-low   { background: #3A2E00; }
+  #thermal-bar-wrap.temp-warm .thermal-seg.lit-trail { background: #CC9900; box-shadow: 0 0 4px #CC9900; }
+  #thermal-bar-wrap.temp-warm .thermal-seg.lit-peak  { background: #FFE600; box-shadow: 0 0 6px #FFE600, 0 0 12px #FFE600; }
+
+  /* HOT — orange */
+  #thermal-bar-wrap.temp-hot .thermal-seg.lit-low   { background: #3A1400; }
+  #thermal-bar-wrap.temp-hot .thermal-seg.lit-trail { background: #CC4400; box-shadow: 0 0 4px #CC4400; }
+  #thermal-bar-wrap.temp-hot .thermal-seg.lit-peak  { background: #FF6600; box-shadow: 0 0 6px #FF6600, 0 0 12px #FF6600; }
 
   #thermal-bottom {
     display: flex;
@@ -1266,6 +1287,8 @@ function updateThermalDisplay(tempF) {
   else                  { st='HOT';     sc='thermal-hot';     }
   thermalStatus.className = sc; thermalStatus.textContent = st;
   thermalReadout.className = sc;
+  // Sync bar wrap colour class
+  thermalWrap.className = 'temp-' + st.toLowerCase();
 
   // Bar: 50°F=0segs, 120°F=20segs
   const pct  = Math.max(0, Math.min(1, (tempF - 50) / 70));
