@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>CRYOTRAC</title>
 <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
 <style>
@@ -133,8 +133,8 @@
     color: var(--dim);
     font-family: 'VT323', monospace;
     font-size: 18px;
-    width: 26px;
-    height: 22px;
+    min-width: 48px;
+    min-height: 48px;
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -263,7 +263,7 @@
     padding-bottom: 2px;
   }
   .readout-field { display: flex; flex-direction: column; align-items: center; }
-  .readout-label { font-size: 10px; color: var(--mid); letter-spacing: 2px; }
+  .readout-label { font-size: 12px; color: var(--mid); letter-spacing: 2px; }
   .readout-val   { color: var(--bright); }
   #zone-val {
     display: inline-block;
@@ -290,7 +290,7 @@
     width: 100%;
   }
   #touch-session-label {
-    font-size: 10px;
+    font-size: 12px;
     letter-spacing: 2px;
     color: var(--mid);
   }
@@ -435,7 +435,7 @@
     flex-shrink: 0;
   }
   #thermal-anomaly-label {
-    font-size: 10px;
+    font-size: 12px;
     letter-spacing: 2px;
     color: var(--mid);
   }
@@ -450,7 +450,7 @@
     animation: flicker 0.15s step-end 6;
   }
   #thermal-warning {
-    font-size: 9px;
+    font-size: 12px;
     letter-spacing: 1px;
     color: var(--dim);
     line-height: 1.3;
@@ -482,7 +482,7 @@
     margin-top: 3px;
   }
   #questions-title {
-    font-size: 11px;
+    font-size: 12px;
     letter-spacing: 3px;
     color: var(--mid);
     flex-shrink: 0;
@@ -514,6 +514,15 @@
     border-color: var(--bright);
     color: var(--bright);
     box-shadow: var(--glow-sm);
+  }
+
+  #disclaimer {
+    font-size: 12px;
+    letter-spacing: 2px;
+    color: var(--dim);
+    text-align: center;
+    padding: 3px 0 2px;
+    flex-shrink: 0;
   }
 </style>
 </head>
@@ -625,6 +634,9 @@
     <div id="question-text"></div>
     <button id="next-question-btn">NEXT QUESTION ▶</button>
   </div>
+
+  <!-- Entertainment disclaimer -->
+  <div id="disclaimer">FOR ENTERTAINMENT PURPOSES ONLY</div>
 
 </div>
 
