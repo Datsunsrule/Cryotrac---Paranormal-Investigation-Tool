@@ -474,7 +474,7 @@
   /* ─── QUESTIONS PANEL ─── */
   #ch03-panel { flex: 1.05; }
 
-  #questions-panel {
+  #questions-panel, #questions-panel-2 {
     flex: 0 0 auto;
     border: 1px solid var(--bright);
     box-shadow: var(--glow-sm);
@@ -484,14 +484,14 @@
     gap: 4px;
     margin-top: 3px;
   }
-  #questions-title {
+  #questions-title, #questions-title-2 {
     font-size: 12px;
     letter-spacing: 3px;
     color: var(--mid);
     flex-shrink: 0;
     line-height: 1;
   }
-  #question-text {
+  #question-text, #question-text-2 {
     font-size: 14px;
     letter-spacing: 1px;
     color: var(--bright);
@@ -499,7 +499,7 @@
     flex: 1;
     min-height: 42px;
   }
-  #next-question-btn {
+  #next-question-btn, #next-question-btn-2 {
     width: 100%;
     min-height: 48px;
     background: transparent;
@@ -512,8 +512,8 @@
     transition: all 0.15s;
     flex-shrink: 0;
   }
-  #next-question-btn:active,
-  #next-question-btn:hover {
+  #next-question-btn:active, #next-question-btn:hover,
+  #next-question-btn-2:active, #next-question-btn-2:hover {
     border-color: var(--bright);
     color: var(--bright);
     box-shadow: var(--glow-sm);
@@ -678,6 +678,13 @@
         <button id="ghostec-play-btn">▶ &nbsp;INITIATE SEQUENCE</button>
       </div>
     </div>
+    <!-- INVESTIGATIVE QUESTIONS (page 2 — independent pool) -->
+    <div id="questions-panel-2">
+      <div id="questions-title-2">SAMPLE INVESTIGATIVE QUESTIONS</div>
+      <div id="question-text-2"></div>
+      <button id="next-question-btn-2">NEXT QUESTION ▶</button>
+    </div>
+
     <div id="disclaimer-ghostec">FOR ENTERTAINMENT PURPOSES ONLY</div>
   </div>
 
@@ -1357,6 +1364,36 @@ function showNextQuestion() {
 questionTextEl.style.transition = 'opacity 0.15s';
 showNextQuestion();
 nextQuestionBtn.addEventListener('click', showNextQuestion);
+
+// ─── PAGE 2 QUESTIONS (independent pool) ───
+let questionPool2  = [];
+let lastQuestion2  = '';
+
+function pickQuestion2() {
+  if (questionPool2.length === 0) {
+    questionPool2 = [...QUESTIONS].sort(() => Math.random() - 0.5);
+    if (questionPool2[0] === lastQuestion2 && questionPool2.length > 1) {
+      questionPool2.push(questionPool2.shift());
+    }
+  }
+  lastQuestion2 = questionPool2.shift();
+  return lastQuestion2;
+}
+
+const questionText2El  = document.getElementById('question-text-2');
+const nextQuestionBtn2 = document.getElementById('next-question-btn-2');
+
+function showNextQuestion2() {
+  questionText2El.style.opacity = '0';
+  setTimeout(() => {
+    questionText2El.textContent = pickQuestion2();
+    questionText2El.style.opacity = '1';
+  }, 150);
+}
+
+questionText2El.style.transition = 'opacity 0.15s';
+showNextQuestion2();
+nextQuestionBtn2.addEventListener('click', showNextQuestion2);
 
 // ═══════════════════════════════════════════════
 //  TAB BAR
