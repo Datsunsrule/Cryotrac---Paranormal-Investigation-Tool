@@ -518,6 +518,31 @@
     color: var(--bright);
     box-shadow: var(--glow-sm);
   }
+  #read-aloud-btn, #read-aloud-btn-2 {
+    width: 100%;
+    min-height: 48px;
+    background: transparent;
+    border: 1px solid var(--dim);
+    color: var(--mid);
+    font-family: 'VT323', monospace;
+    font-size: 16px;
+    letter-spacing: 3px;
+    cursor: pointer;
+    transition: all 0.15s;
+    flex-shrink: 0;
+  }
+  #read-aloud-btn:active, #read-aloud-btn:hover,
+  #read-aloud-btn-2:active, #read-aloud-btn-2:hover {
+    border-color: var(--bright);
+    color: var(--bright);
+    box-shadow: var(--glow-sm);
+  }
+  #read-aloud-btn.speaking, #read-aloud-btn-2.speaking {
+    border-color: var(--bright);
+    color: var(--bright);
+    box-shadow: var(--glow-sm);
+    animation: pulse 0.8s ease-in-out infinite alternate;
+  }
 
   #disclaimer, #disclaimer-ghostec {
     font-size: 12px;
@@ -658,6 +683,7 @@
     <div id="questions-panel">
       <div id="questions-title">SAMPLE INVESTIGATIVE QUESTIONS</div>
       <div id="question-text"></div>
+      <button id="read-aloud-btn">🔊 &nbsp;READ ALOUD</button>
       <button id="next-question-btn">NEXT QUESTION ▶</button>
     </div>
 
@@ -678,10 +704,11 @@
         <button id="ghostec-play-btn">▶ &nbsp;INITIATE SEQUENCE</button>
       </div>
     </div>
-    <!-- INVESTIGATIVE QUESTIONS (page 2 — independent pool) -->
+    <!-- INVESTIGATIVE QUESTIONS (page 2 — synced pool) -->
     <div id="questions-panel-2">
       <div id="questions-title-2">SAMPLE INVESTIGATIVE QUESTIONS</div>
       <div id="question-text-2"></div>
+      <button id="read-aloud-btn-2">🔊 &nbsp;READ ALOUD</button>
       <button id="next-question-btn-2">NEXT QUESTION ▶</button>
     </div>
 
@@ -1372,6 +1399,29 @@ questionText2El.style.transition = 'opacity 0.15s';
 showNextQuestion();
 nextQuestionBtn.addEventListener('click', showNextQuestion);
 nextQuestionBtn2.addEventListener('click', showNextQuestion);
+
+// ─── READ ALOUD ───
+const readAloudBtn  = document.getElementById('read-aloud-btn');
+const readAloudBtn2 = document.getElementById('read-aloud-btn-2');
+
+function speakQuestion() {
+  speechSynthesis.cancel();
+  const text = questionTextEl.textContent.trim();
+  if (!text) return;
+  const utt    = new SpeechSynthesisUtterance(text);
+  utt.rate     = 1.0;
+  utt.pitch    = 0.9;
+  utt.volume   = 1.0;
+  // Mark both buttons as speaking
+  [readAloudBtn, readAloudBtn2].forEach(b => b.classList.add('speaking'));
+  utt.onend = utt.onerror = () => {
+    [readAloudBtn, readAloudBtn2].forEach(b => b.classList.remove('speaking'));
+  };
+  speechSynthesis.speak(utt);
+}
+
+readAloudBtn.addEventListener('click',  speakQuestion);
+readAloudBtn2.addEventListener('click', speakQuestion);
 
 // ═══════════════════════════════════════════════
 //  TAB BAR
