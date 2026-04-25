@@ -1350,50 +1350,28 @@ function pickQuestion() {
   return lastQuestion;
 }
 
-const questionTextEl = document.getElementById('question-text');
-const nextQuestionBtn = document.getElementById('next-question-btn');
-
-function showNextQuestion() {
-  questionTextEl.style.opacity = '0';
-  setTimeout(() => {
-    questionTextEl.textContent = pickQuestion();
-    questionTextEl.style.opacity = '1';
-  }, 150);
-}
-
-questionTextEl.style.transition = 'opacity 0.15s';
-showNextQuestion();
-nextQuestionBtn.addEventListener('click', showNextQuestion);
-
-// ─── PAGE 2 QUESTIONS (independent pool) ───
-let questionPool2  = [];
-let lastQuestion2  = '';
-
-function pickQuestion2() {
-  if (questionPool2.length === 0) {
-    questionPool2 = [...QUESTIONS].sort(() => Math.random() - 0.5);
-    if (questionPool2[0] === lastQuestion2 && questionPool2.length > 1) {
-      questionPool2.push(questionPool2.shift());
-    }
-  }
-  lastQuestion2 = questionPool2.shift();
-  return lastQuestion2;
-}
-
-const questionText2El  = document.getElementById('question-text-2');
+const questionTextEl  = document.getElementById('question-text');
+const questionText2El = document.getElementById('question-text-2');
+const nextQuestionBtn  = document.getElementById('next-question-btn');
 const nextQuestionBtn2 = document.getElementById('next-question-btn-2');
 
-function showNextQuestion2() {
-  questionText2El.style.opacity = '0';
-  setTimeout(() => {
-    questionText2El.textContent = pickQuestion2();
-    questionText2El.style.opacity = '1';
-  }, 150);
+// Both panels share the same pool — they always show the same question
+function showNextQuestion() {
+  const next = pickQuestion();
+  [questionTextEl, questionText2El].forEach(el => {
+    el.style.opacity = '0';
+    setTimeout(() => {
+      el.textContent = next;
+      el.style.opacity = '1';
+    }, 150);
+  });
 }
 
+questionTextEl.style.transition  = 'opacity 0.15s';
 questionText2El.style.transition = 'opacity 0.15s';
-showNextQuestion2();
-nextQuestionBtn2.addEventListener('click', showNextQuestion2);
+showNextQuestion();
+nextQuestionBtn.addEventListener('click', showNextQuestion);
+nextQuestionBtn2.addEventListener('click', showNextQuestion);
 
 // ═══════════════════════════════════════════════
 //  TAB BAR
