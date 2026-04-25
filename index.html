@@ -235,7 +235,7 @@
 
   #power-btn {
     padding: 0 12px;
-    height: 30px;
+    min-height: 48px;
     background: transparent;
     border: 2px solid var(--dim);
     color: var(--dim);
@@ -348,12 +348,12 @@
   }
   #ghostec-play-btn {
     width: 100%;
-    height: 28px;
+    min-height: 48px;
     background: transparent;
     border: 1px solid var(--dim);
     color: var(--dim);
     font-family: 'VT323', monospace;
-    font-size: 16px;
+    font-size: 18px;
     letter-spacing: 4px;
     cursor: pointer;
     transition: all 0.1s;
@@ -410,12 +410,12 @@
   }
   #temp-sample-btn {
     width: 100%;
-    height: 24px;
+    min-height: 48px;
     background: transparent;
     border: 1px solid var(--dim);
     color: var(--dim);
     font-family: 'VT323', monospace;
-    font-size: 12px;
+    font-size: 14px;
     letter-spacing: 2px;
     cursor: pointer;
     transition: all 0.15s;
@@ -461,7 +461,7 @@
     overflow: visible;
   }
   #temp-event-counter {
-    font-size: 11px;
+    font-size: 12px;
     letter-spacing: 2px;
     color: var(--mid);
     transition: color 0.1s, text-shadow 0.1s;
@@ -501,12 +501,12 @@
   }
   #next-question-btn {
     width: 100%;
-    height: 24px;
+    min-height: 48px;
     background: transparent;
     border: 1px solid var(--dim);
     color: var(--dim);
     font-family: 'VT323', monospace;
-    font-size: 14px;
+    font-size: 16px;
     letter-spacing: 3px;
     cursor: pointer;
     transition: all 0.15s;
@@ -519,13 +519,51 @@
     box-shadow: var(--glow-sm);
   }
 
-  #disclaimer {
+  #disclaimer, #disclaimer-ghostec {
     font-size: 12px;
     letter-spacing: 2px;
     color: var(--dim);
     text-align: center;
     padding: 3px 0 2px;
     flex-shrink: 0;
+  }
+
+  /* ─── PAGES ─── */
+  .page {
+    display: none;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+  }
+  .page.active { display: flex; }
+
+  /* ─── TAB BAR ─── */
+  #tab-bar {
+    display: flex;
+    flex-shrink: 0;
+    min-height: 48px;
+    border-top: 1px solid var(--dim);
+    background: #000;
+    z-index: 10;
+  }
+  .tab-btn {
+    flex: 1;
+    background: transparent;
+    border: none;
+    border-top: 2px solid transparent;
+    color: var(--dim);
+    font-family: 'VT323', monospace;
+    font-size: 16px;
+    letter-spacing: 3px;
+    cursor: pointer;
+    min-height: 48px;
+    transition: all 0.15s;
+  }
+  .tab-btn.active {
+    color: var(--bright);
+    border-top-color: var(--bright);
+    text-shadow: var(--glow-sm);
   }
 </style>
 </head>
@@ -546,100 +584,108 @@
     </div>
     <div class="subtitle">PARANORMAL INVESTIGATION TOOL&nbsp;</div>
   </div>
-  <div class="divider"></div>
+  <!-- ═══ PAGE 1: SCANNER ═══ -->
+  <div class="page active" id="page-scanner">
+    <div class="divider"></div>
 
-  <!-- CH-01 -->
-  <div class="panel" id="ch01-panel">
-    <div class="panel-header">
-      <span><span class="ch-label">CH-01</span> &nbsp;SCREEN TOUCH SENSOR</span>
-      <button id="power-btn">ON</button>
-    </div>
-    <div id="ch01-body">
-      <div id="ch01-top">
-        <svg id="meter-svg" viewBox="0 0 220 120" xmlns="http://www.w3.org/2000/svg">
-          <defs>
-            <filter id="glow">
-              <feGaussianBlur stdDeviation="2.5" result="blur"/>
-              <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-            </filter>
-          </defs>
-          <!-- Tick arcs & labels rendered by JS -->
-          <g id="meter-ticks"></g>
-          <g id="meter-arc-bg"></g>
-          <g id="meter-arc-fg" filter="url(#glow)"></g>
-          <!-- Needle: wide base tapering to sharp tip -->
-          <polygon id="needle" points="110,28 106,112 114,112"
-            fill="#39FF14"
-            style="transform-origin:110px 110px;transform:rotate(0deg)"
-            filter="url(#glow)"/>
-          <!-- Pivot -->
-          <circle cx="110" cy="110" r="5" fill="#39FF14" filter="url(#glow)"/>
-          <circle cx="110" cy="110" r="2" fill="#020802"/>
-        </svg>
-        <div id="ch01-right">
-          <div class="numeric-readout" id="ch01-num">000</div>
-          <div id="ch01-status" class="status-offline">OFFLINE</div>
+    <!-- CH-01 -->
+    <div class="panel" id="ch01-panel">
+      <div class="panel-header">
+        <span><span class="ch-label">CH-01</span> &nbsp;SCREEN TOUCH SENSOR</span>
+        <button id="power-btn">ON</button>
+      </div>
+      <div id="ch01-body">
+        <div id="ch01-top">
+          <svg id="meter-svg" viewBox="0 0 220 120" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <filter id="glow">
+                <feGaussianBlur stdDeviation="2.5" result="blur"/>
+                <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+              </filter>
+            </defs>
+            <g id="meter-ticks"></g>
+            <g id="meter-arc-bg"></g>
+            <g id="meter-arc-fg" filter="url(#glow)"></g>
+            <polygon id="needle" points="110,28 106,112 114,112"
+              fill="#39FF14"
+              style="transform-origin:110px 110px;transform:rotate(0deg)"
+              filter="url(#glow)"/>
+            <circle cx="110" cy="110" r="5" fill="#39FF14" filter="url(#glow)"/>
+            <circle cx="110" cy="110" r="2" fill="#000"/>
+          </svg>
+          <div id="ch01-right">
+            <div class="numeric-readout" id="ch01-num">000</div>
+            <div id="ch01-status" class="status-offline">OFFLINE</div>
+          </div>
+        </div>
+        <div id="readout-strip">
+          <div class="readout-field"><div class="readout-label">CNT</div><div class="readout-val" id="rs-cnt">0</div></div>
+          <div class="readout-field"><div class="readout-label">FRC</div><div class="readout-val" id="rs-frc">0.00</div></div>
+          <div class="readout-field"><div class="readout-label">AREA</div><div class="readout-val" id="rs-area">0.00</div></div>
+          <div class="readout-field"><div class="readout-label">ZONE</div><div id="zone-val"></div></div>
+        </div>
+        <div id="touch-session-box">
+          <div id="touch-session-label">NUMBER OF TOUCHES THIS SESSION</div>
+          <div id="touch-session-count">0</div>
         </div>
       </div>
-      <div id="readout-strip">
-        <div class="readout-field"><div class="readout-label">CNT</div><div class="readout-val" id="rs-cnt">0</div></div>
-        <div class="readout-field"><div class="readout-label">FRC</div><div class="readout-val" id="rs-frc">0.00</div></div>
-        <div class="readout-field"><div class="readout-label">AREA</div><div class="readout-val" id="rs-area">0.00</div></div>
-        <div class="readout-field"><div class="readout-label">ZONE</div><div id="zone-val"></div></div>
-      </div>
-      <div id="touch-session-box">
-        <div id="touch-session-label">NUMBER OF TOUCHES THIS SESSION</div>
-        <div id="touch-session-count">0</div>
-      </div>
     </div>
-  </div>
-  <div class="divider"></div>
+    <div class="divider"></div>
 
-  <!-- GHOSTEC -->
-  <div class="panel" id="ghostec-panel">
-    <div class="panel-header">
-      <span><span class="ch-label">GHOSTEC</span> &nbsp;WORD ENGINE</span>
-      <span id="ghostec-counter">0000/5000</span>
-    </div>
-    <div id="ghostec-body">
-      <div id="ghostec-word">-- READY --</div>
-      <div id="ghostec-progress-wrap"><div id="ghostec-progress-bar"></div></div>
-      <button id="ghostec-play-btn">▶ &nbsp;INITIATE SEQUENCE</button>
-    </div>
-  </div>
-  <div class="divider"></div>
-
-  <!-- CH-03 THERMAL -->
-  <div class="panel" id="ch03-panel">
-    <div class="panel-header">
-      <span><span class="ch-label">CH-03</span> &nbsp;THERMAL SENSOR</span>
-      <span id="temp-event-counter" title="Temperature spike events this session">ΔTEMP: <span id="temp-event-count">0</span></span>
-    </div>
-    <div id="ch03-body">
-      <div id="thermal-bar-wrap"></div>
-      <div id="thermal-bottom">
-        <div id="thermal-status" class="status-clear">AMBIENT</div>
-        <div id="thermal-readout">--.-°F</div>
+    <!-- CH-03 THERMAL -->
+    <div class="panel" id="ch03-panel">
+      <div class="panel-header">
+        <span><span class="ch-label">CH-03</span> &nbsp;THERMAL SENSOR</span>
+        <span id="temp-event-counter" title="Temperature spike events this session">ΔTEMP: <span id="temp-event-count">0</span></span>
       </div>
-      <button id="temp-sample-btn">▶ PLAY SAMPLE TEMPERATURE CHANGE WARNING</button>
-      <div id="thermal-anomaly-box">
-        <div id="thermal-anomaly-label">NUMBER OF THERMAL SENSOR ANOMALIES THIS SESSION</div>
-        <div id="thermal-anomaly-count">0</div>
+      <div id="ch03-body">
+        <div id="thermal-bar-wrap"></div>
+        <div id="thermal-bottom">
+          <div id="thermal-status" class="status-clear">AMBIENT</div>
+          <div id="thermal-readout">--.-°F</div>
+        </div>
+        <button id="temp-sample-btn">▶ PLAY SAMPLE TEMPERATURE ALERT</button>
+        <div id="thermal-anomaly-box">
+          <div id="thermal-anomaly-label">NUMBER OF THERMAL SENSOR ANOMALIES THIS SESSION</div>
+          <div id="thermal-anomaly-count">0</div>
+        </div>
+        <div id="thermal-warning">⚠ ANDROID CHROME ONLY — OTHER DEVICES: SIMULATED DATA</div>
       </div>
-      <div id="thermal-warning">⚠ ANDROID CHROME ONLY — OTHER DEVICES: SIMULATED DATA</div>
     </div>
-  </div>
-  <div class="divider"></div>
+    <div class="divider"></div>
 
-  <!-- INVESTIGATIVE QUESTIONS -->
-  <div id="questions-panel">
-    <div id="questions-title">SAMPLE INVESTIGATIVE QUESTIONS</div>
-    <div id="question-text"></div>
-    <button id="next-question-btn">NEXT QUESTION ▶</button>
+    <!-- INVESTIGATIVE QUESTIONS -->
+    <div id="questions-panel">
+      <div id="questions-title">SAMPLE INVESTIGATIVE QUESTIONS</div>
+      <div id="question-text"></div>
+      <button id="next-question-btn">NEXT QUESTION ▶</button>
+    </div>
+
+    <div id="disclaimer">FOR ENTERTAINMENT PURPOSES ONLY</div>
   </div>
 
-  <!-- Entertainment disclaimer -->
-  <div id="disclaimer">FOR ENTERTAINMENT PURPOSES ONLY</div>
+  <!-- ═══ PAGE 2: GHOSTEC ═══ -->
+  <div class="page" id="page-ghostec">
+    <div class="divider"></div>
+    <div class="panel" id="ghostec-panel">
+      <div class="panel-header">
+        <span><span class="ch-label">GHOSTEC</span> &nbsp;WORD ENGINE</span>
+        <span id="ghostec-counter">0000/5000</span>
+      </div>
+      <div id="ghostec-body">
+        <div id="ghostec-word">-- READY --</div>
+        <div id="ghostec-progress-wrap"><div id="ghostec-progress-bar"></div></div>
+        <button id="ghostec-play-btn">▶ &nbsp;INITIATE SEQUENCE</button>
+      </div>
+    </div>
+    <div id="disclaimer-ghostec">FOR ENTERTAINMENT PURPOSES ONLY</div>
+  </div>
+
+  <!-- ═══ TAB BAR ═══ -->
+  <div id="tab-bar">
+    <button class="tab-btn active" data-page="page-scanner">⬡ SCANNER</button>
+    <button class="tab-btn" data-page="page-ghostec">◈ GHOSTEC</button>
+  </div>
 
 </div>
 
@@ -1311,6 +1357,21 @@ function showNextQuestion() {
 questionTextEl.style.transition = 'opacity 0.15s';
 showNextQuestion();
 nextQuestionBtn.addEventListener('click', showNextQuestion);
+
+// ═══════════════════════════════════════════════
+//  TAB BAR
+// ═══════════════════════════════════════════════
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const target = btn.dataset.page;
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById(target).classList.add('active');
+    btn.classList.add('active');
+    // Stop ghostec if switching away from ghostec page
+    if (target !== 'page-ghostec' && ghostecRunning) ghostecStop(false);
+  });
+});
 </script>
 </body>
 </html>
