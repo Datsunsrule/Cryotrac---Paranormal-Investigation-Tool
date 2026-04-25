@@ -1675,18 +1675,19 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
   const homeScreen  = document.getElementById('home-screen');
   const enterBtn    = document.getElementById('home-enter-btn');
 
-  // Note frequencies: A4, C5, E4, F4, Bb4 (tritone)
+  // Whole-tone scale: C D E Gb Ab Bb C
   const NOTES = {
-    A4: 440.00, C5: 523.25, E4: 329.63, F4: 349.23, Bb4: 466.16
+    C4: 261.63, D4: 293.66, E4: 329.63,
+    Gb4: 369.99, Ab4: 415.30, Bb4: 466.16, C5: 523.25
   };
-  const { A4, C5, E4, F4, Bb4 } = NOTES;
+  const { C4, D4, E4, Gb4, Ab4, Bb4, C5 } = NOTES;
 
-  // 32-note ambient sequence — soft, mellow, slightly mysterious
+  // 32-note loop — ascends, floats, descends, resolves back to C seamlessly
   const SEQUENCE = [
-    A4, E4, C5, A4,  F4,  E4, A4,  Bb4,
-    C5, A4, F4, E4,  Bb4, A4, C5,  E4,
-    F4, C5, A4, Bb4, E4,  F4, C5,  A4,
-    E4, A4, Bb4, F4, C5,  E4, A4,  F4
+    C4,  D4,  E4,  Gb4, Ab4, Bb4, C5,  Bb4,
+    Ab4, Gb4, E4,  D4,  C4,  E4,  Gb4, Ab4,
+    Bb4, C5,  Ab4, Gb4, E4,  D4,  E4,  Gb4,
+    Ab4, Bb4, C5,  Bb4, Ab4, Gb4, E4,  D4
   ];
 
   const NOTE_DUR   = 1.4;   // seconds per note
