@@ -943,6 +943,7 @@
 
   <!-- ═══ TAB BAR ═══ -->
   <div id="tab-bar">
+    <button class="tab-btn" id="home-tab-btn">⌂ HOME</button>
     <button class="tab-btn active" data-page="page-scanner">⬡ SCANNER</button>
     <button class="tab-btn" data-page="page-ghostec">◈ GHOSTEC</button>
     <button class="tab-btn" data-page="page-instructions">? INFO</button>
@@ -1838,7 +1839,22 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     homeScreen.classList.add('fade-out');
     setTimeout(() => { homeScreen.style.display = 'none'; }, 850);
   });
+
+  // Exposed so the HOME tab button can return to this screen
+  window.showHomeScreen = function() {
+    musicStarted = false;
+    homeScreen.style.display = 'flex';
+    homeScreen.classList.remove('fade-out');
+    setTimeout(() => tryStartMusic(), 300);
+  };
 })();
+
+// HOME tab button
+document.getElementById('home-tab-btn').addEventListener('click', () => {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  if (typeof ghostecStop === 'function' && ghostecRunning) ghostecStop(false);
+  window.showHomeScreen();
+});
 </script>
 </body>
 </html>
