@@ -873,7 +873,7 @@
   <div id="home-logo-wrap">
     <img id="home-logo-img" src="logofinal.jpg" alt="Cryotrac"/>
   </div>
-  <button id="home-enter-btn">▶ &nbsp;ENTER</button>
+  <button id="home-enter-btn" ontouchstart="window.enterApp()" onclick="window.enterApp()">▶ &nbsp;ENTER</button>
   <div id="home-disclaimer">
     CRYOTRAC IS DESIGNED FOR ENTERTAINMENT PURPOSES ONLY.<br>
     EMF AND TOUCH SENSORS USE REAL DEVICE HARDWARE DATA.<br>
@@ -1852,42 +1852,33 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
 // ═══════════════════════════════════════════════
 (function() {
   const homeScreen = document.getElementById('home-screen');
-  const enterBtn   = document.getElementById('home-enter-btn');
 
-  // MP3 player — loop enabled, starts muted until user gesture
+  // ── Music ──
   const bgMusic = new Audio('The_Midnight_Perimeter.mp3');
   bgMusic.loop   = true;
   bgMusic.volume = 0.7;
-
   let musicStarted = false;
 
   function startMusic() {
     if (musicStarted) return;
     musicStarted = true;
     bgMusic.currentTime = 0;
-    bgMusic.play().catch(() => {
-      // Autoplay blocked — reset and retry on first touch
-      musicStarted = false;
-      homeScreen.addEventListener('pointerdown', startMusic, { once: true });
-    });
+    bgMusic.play().catch(() => { musicStarted = false; });
   }
 
   function stopMusic() {
-    // Fade out over 800ms then pause
-    const steps = 16;
-    const start = bgMusic.volume;
-    let step = 0;
-    const fade = setInterval(() => {
-      step++;
-      bgMusic.volume = Math.max(0, start * (1 - step / steps));
-      if (step >= steps) {
-        clearInterval(fade);
-        bgMusic.pause();
-        bgMusic.volume = 0.7; // restore for next time
-      }
-    }, 50);
+    try {
+      const steps = 16, start = bgMusic.volume;
+      let step = 0;
+      const fade = setInterval(() => {
+        step++;
+        bgMusic.volume = Math.max(0, start * (1 - step / steps));
+        if (step >= steps) { clearInterval(fade); bgMusic.pause(); bgMusic.volume = 0.7; }
+      }, 50);
+    } catch(e) { try { bgMusic.pause(); } catch(e2) {} }
   }
 
+  // ── Scanner activation ──
   function activateScanner() {
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -1897,31 +1888,40 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     if (tb) tb.classList.add('active');
   }
 
-  // Try autoplay immediately; catch handles fallback to first touch
+  // Try autoplay on load
   startMusic();
 
-  function handleEnter() {
-    startMusic(); // ensure music started on this gesture
+  // ── Enter — global so ontouchstart/onclick on button can reach it ──
+  let entered = false;
+  window.enterApp = function() {
+    if (entered) return;
+    entered = true;
+    startMusic(); // capture gesture for audio
     stopMusic();
     activateScanner();
-    homeScreen.classList.add('fade-out');
+    homeScreen.style.transition = 'opacity 0.8s ease';
+    homeScreen.style.opacity = '0';
+    homeScreen.style.pointerEvents = 'none';
     setTimeout(() => {
       homeScreen.style.display = 'none';
+      homeScreen.style.opacity = '1';
+      homeScreen.style.transition = '';
       activateScanner();
     }, 850);
-  }
-  enterBtn.addEventListener('click', handleEnter);
-  enterBtn.addEventListener('touchend', (e) => { e.preventDefault(); handleEnter(); });
+  };
 
-  // Exposed so logo tap can return here
+  // ── Return to home (logo tap) ──
   window.showHomeScreen = function() {
+    entered = false;
     musicStarted = false;
     bgMusic.currentTime = 0;
     bgMusic.volume = 0.7;
     homeScreen.style.display = 'flex';
+    homeScreen.style.opacity = '1';
+    homeScreen.style.pointerEvents = '';
+    homeScreen.style.transition = '';
     homeScreen.classList.remove('fade-out');
-    // Re-attach the once listener for the next gesture
-    homeScreen.addEventListener('pointerdown', startMusic, { once: true });
+    homeScreen.addEventListener('touchstart', startMusic, { once: true });
   };
 })();
 
