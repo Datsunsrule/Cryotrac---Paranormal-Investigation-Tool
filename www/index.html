@@ -111,20 +111,7 @@
     z-index: 0;
   }
 
-  /* Scanlines — on top of everything */
-  #scanlines {
-    position: fixed;
-    inset: 0;
-    background: repeating-linear-gradient(
-      to bottom,
-      transparent 0px,
-      transparent 2px,
-      rgba(0,255,0,0.13) 2px,
-      rgba(0,255,0,0.13) 3px
-    );
-    pointer-events: none;
-    z-index: 9999;
-  }
+  /* Scanlines — applied via background on app wrapper, no overlay needed */
 
   #app {
     display: flex;
@@ -865,8 +852,6 @@
 </style>
 </head>
 <body>
-
-<div id="scanlines"></div>
 
 <!-- ═══ HOME SCREEN ═══ -->
 <div id="home-screen">
