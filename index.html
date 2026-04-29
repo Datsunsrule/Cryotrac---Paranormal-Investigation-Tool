@@ -858,7 +858,7 @@
   <div id="home-logo-wrap">
     <img id="home-logo-img" src="logofinal.jpg" alt="Cryotrac"/>
   </div>
-  <button id="home-enter-btn" ontouchstart="window.enterApp()" onclick="window.enterApp()">▶ &nbsp;ENTER</button>
+  <button id="home-enter-btn" ontouchstart="this.textContent='...';window.enterApp&&window.enterApp()" onclick="this.textContent='...';window.enterApp&&window.enterApp()">▶ &nbsp;ENTER</button>
   <div id="home-disclaimer">
     CRYOTRAC IS DESIGNED FOR ENTERTAINMENT PURPOSES ONLY.<br>
     EMF AND TOUCH SENSORS USE REAL DEVICE HARDWARE DATA.<br>
@@ -1060,6 +1060,13 @@
 </div>
 
 <script>
+// ── DEBUG: catch JS errors and show on screen ──
+window.onerror = function(msg, src, line) {
+  var el = document.createElement('div');
+  el.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#FF0000;color:#fff;padding:12px;z-index:99999;font-size:13px;word-break:break-all;font-family:monospace;';
+  el.textContent = 'JS ERR L' + line + ': ' + msg;
+  document.body.appendChild(el);
+};
 // ═══════════════════════════════════════════════
 //  METER SVG SETUP
 // ═══════════════════════════════════════════════
