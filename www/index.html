@@ -112,8 +112,7 @@
   }
 
   /* Scanlines — on top of everything */
-  body::after {
-    content: '';
+  #scanlines {
     position: fixed;
     inset: 0;
     background: repeating-linear-gradient(
@@ -866,6 +865,8 @@
 </style>
 </head>
 <body>
+
+<div id="scanlines"></div>
 
 <!-- ═══ HOME SCREEN ═══ -->
 <div id="home-screen">
@@ -1899,15 +1900,18 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
   // Try autoplay immediately; catch handles fallback to first touch
   startMusic();
 
-  enterBtn.addEventListener('click', () => {
+  function handleEnter() {
+    startMusic(); // ensure music started on this gesture
     stopMusic();
     activateScanner();
     homeScreen.classList.add('fade-out');
     setTimeout(() => {
       homeScreen.style.display = 'none';
-      activateScanner(); // belt and braces
+      activateScanner();
     }, 850);
-  });
+  }
+  enterBtn.addEventListener('click', handleEnter);
+  enterBtn.addEventListener('touchend', (e) => { e.preventDefault(); handleEnter(); });
 
   // Exposed so logo tap can return here
   window.showHomeScreen = function() {
